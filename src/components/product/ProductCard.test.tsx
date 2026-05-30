@@ -2,7 +2,7 @@ import { MemoryRouter } from "react-router-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, beforeEach } from "vitest";
-import { products } from "@/lib/mockData";
+import { testProducts as products } from "@/test/fixtures";
 import { useCartStore } from "@/stores/cartStore";
 import { ProductCard } from "./ProductCard";
 

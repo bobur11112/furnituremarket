@@ -16,7 +16,7 @@ export function PrivateRoute({ children, roles }: PrivateRouteProps) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  if (loading || (roles && user && !profile)) {
     return (
       <div className="container grid min-h-[70vh] place-items-center py-16">
         <Skeleton className="h-48 w-full max-w-md" />

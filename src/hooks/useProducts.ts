@@ -1,80 +1,96 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { categories as demoCategories, demoSeller, products as demoProducts } from "@/lib/mockData";
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { requireSupabaseConfigured, supabase, type Database } from "@/lib/supabase";
 import { productMatchesFilters, sortProducts } from "@/lib/utils";
-import type { Category, FurnitureStyle, Product, ProductCreateInput, ProductFilters } from "@/types/product";
+import { catalogMaxPrice, type Category, type FurnitureStyle, type Product, type ProductCreateInput, type ProductFilters } from "@/types/product";
 
 const defaultFilters: ProductFilters = {
   categories: [],
   styles: [],
   materials: [],
   minPrice: 0,
-  maxPrice: 10000,
+  maxPrice: catalogMaxPrice,
   sort: "newest",
   search: "",
 };
+
+const productImagesBucket = "product-images";
+const maxImageSize = 5 * 1024 * 1024;
+const allowedImageExtensions = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/png", "png"],
+  ["image/webp", "webp"],
+]);
+
+type ProductRow = Database["public"]["Tables"]["products"]["Row"];
+type ProductWithCategoryRow = ProductRow & { categories?: Category | Category[] | null };
 
 function isFurnitureStyle(value: string | null): value is FurnitureStyle {
   return value === "modern" || value === "classic" || value === "scandinavian" || value === "industrial" || value === "minimalist";
 }
 
-async function delay(ms = 280) {
-  await new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-function attachRelations(product: Product, categories: Category[]) {
-  const category = categories.find((item) => item.id === product.category_id) ?? product.category;
+function normalizeProduct(row: ProductWithCategoryRow, categories: Category[] = []): Product {
+  const relation = Array.isArray(row.categories) ? row.categories[0] : row.categories;
   return {
-    ...product,
-    category,
-    seller: product.seller ?? {
-      id: demoSeller.id,
-      full_name: demoSeller.full_name,
-      avatar_url: demoSeller.avatar_url,
-      role: demoSeller.role,
-    },
+    ...row,
+    price: Number(row.price),
+    stock_count: Number(row.stock_count),
+    images: row.images ?? [],
+    style: isFurnitureStyle(row.style) ? row.style : null,
+    category: relation ?? categories.find((category) => category.id === row.category_id),
+    badge: row.stock_count === 0 ? "Sold Out" : undefined,
   };
 }
 
-async function fetchCategories() {
-  if (!isSupabaseConfigured) {
-    await delay(120);
-    return demoCategories;
+function storagePathFromPublicUrl(imageUrl: string) {
+  try {
+    const marker = `/storage/v1/object/public/${productImagesBucket}/`;
+    const pathname = new URL(imageUrl).pathname;
+    const markerIndex = pathname.indexOf(marker);
+    return markerIndex === -1 ? null : decodeURIComponent(pathname.slice(markerIndex + marker.length));
+  } catch {
+    return null;
   }
+}
 
+export async function deleteUploadedProductImages(imageUrls: string[]) {
+  requireSupabaseConfigured();
+  const paths = [...new Set(imageUrls.map(storagePathFromPublicUrl).filter((path): path is string => Boolean(path)))];
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from(productImagesBucket).remove(paths);
+  if (error) throw error;
+}
+
+export async function fetchCategories() {
+  requireSupabaseConfigured();
   const { data, error } = await supabase.from("categories").select("*").order("name");
   if (error) throw error;
   return data;
 }
 
 async function fetchPublishedProducts() {
-  if (!isSupabaseConfigured) {
-    await delay();
-    return demoProducts;
-  }
+  requireSupabaseConfigured();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, categories(*)")
+    .is("deleted_at", null)
+    .eq("is_published", true)
+    .order("created_at", { ascending: false });
 
-  const [categoryResult, productResult] = await Promise.all([
-    supabase.from("categories").select("*"),
-    supabase.from("products").select("*").eq("is_published", true),
-  ]);
+  if (error) throw error;
+  return (data as ProductWithCategoryRow[]).map((row) => normalizeProduct(row));
+}
 
-  if (categoryResult.error) throw categoryResult.error;
-  if (productResult.error) throw productResult.error;
+export async function fetchManagedProducts() {
+  requireSupabaseConfigured();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, categories(*)")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
 
-  const sourceCategories = categoryResult.data;
-  return productResult.data.map<Product>((row) =>
-    attachRelations(
-      {
-        ...row,
-        price: Number(row.price),
-        stock_count: Number(row.stock_count),
-        images: row.images ?? [],
-        style: isFurnitureStyle(row.style) ? row.style : null,
-        badge: row.stock_count === 0 ? "Sold Out" : undefined,
-      },
-      sourceCategories,
-    ),
-  );
+  if (error) throw error;
+  return (data as ProductWithCategoryRow[]).map((row) => normalizeProduct(row));
 }
 
 export async function fetchProducts(filters: Partial<ProductFilters> = {}) {
@@ -87,134 +103,97 @@ export async function fetchProducts(filters: Partial<ProductFilters> = {}) {
 }
 
 export async function fetchProduct(id: string) {
-  if (!isSupabaseConfigured) {
-    await delay(180);
-    return demoProducts.find((product) => product.id === id) ?? null;
-  }
+  requireSupabaseConfigured();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*, categories(*)")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .eq("is_published", true)
+    .maybeSingle();
 
-  const [categoryResult, productResult] = await Promise.all([
-    supabase.from("categories").select("*"),
-    supabase.from("products").select("*").eq("id", id).maybeSingle(),
-  ]);
-
-  if (categoryResult.error) throw categoryResult.error;
-  if (productResult.error) throw productResult.error;
-  if (!productResult.data) return null;
-
-  const row = productResult.data;
-  return attachRelations(
-    {
-      ...row,
-      price: Number(row.price),
-      stock_count: Number(row.stock_count),
-      images: row.images ?? [],
-      style: isFurnitureStyle(row.style) ? row.style : null,
-      badge: row.stock_count === 0 ? "Sold Out" : undefined,
-    },
-    categoryResult.data,
-  );
+  if (error) throw error;
+  return data ? normalizeProduct(data as ProductWithCategoryRow) : null;
 }
 
 export async function uploadProductImages(files: File[]) {
-  if (!isSupabaseConfigured) {
-    await delay(350);
-    return files.map((file) => URL.createObjectURL(file));
-  }
+  requireSupabaseConfigured();
+  if (files.length === 0) return [];
+  if (files.length > 6) throw new Error("Upload up to 6 images at a time.");
 
-  const uploads = await Promise.all(
-    files.map(async (file) => {
-      const extension = file.name.split(".").pop() ?? "jpg";
-      const path = `${crypto.randomUUID()}.${extension}`;
-      const { error } = await supabase.storage.from("product-images").upload(path, file, {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!user) throw new Error("Admin sign in is required to upload images.");
+
+  const uploadedPaths: string[] = [];
+  try {
+    for (const file of files) {
+      const extension = allowedImageExtensions.get(file.type);
+      if (!extension) throw new Error(`${file.name}: use JPG, PNG, or WebP.`);
+      if (file.size > maxImageSize) throw new Error(`${file.name}: image must be 5 MB or smaller.`);
+
+      const path = `${user.id}/${crypto.randomUUID()}.${extension}`;
+      const { error } = await supabase.storage.from(productImagesBucket).upload(path, file, {
         cacheControl: "3600",
+        contentType: file.type,
         upsert: false,
       });
       if (error) throw error;
-      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-      return data.publicUrl;
-    }),
-  );
+      uploadedPaths.push(path);
+    }
+  } catch (error) {
+    if (uploadedPaths.length > 0) await supabase.storage.from(productImagesBucket).remove(uploadedPaths).catch(() => undefined);
+    throw error;
+  }
 
-  return uploads;
+  return uploadedPaths.map((path) => supabase.storage.from(productImagesBucket).getPublicUrl(path).data.publicUrl);
 }
 
 export async function createProduct(input: ProductCreateInput) {
-  if (!isSupabaseConfigured) {
-    await delay(300);
-    const category = demoCategories.find((item) => item.id === input.category_id);
-    return {
-      id: crypto.randomUUID(),
-      ...input,
-      created_at: new Date().toISOString(),
-      category,
-      seller: {
-        id: input.seller_id,
-        full_name: "Demo Seller",
-        avatar_url: null,
-        role: "seller" as const,
-      },
-    } satisfies Product;
-  }
-
-  const { data, error } = await supabase.from("products").insert(input).select("*").single();
+  requireSupabaseConfigured();
+  const { data, error } = await supabase.from("products").insert(input).select("*, categories(*)").single();
   if (error) throw error;
-
-  return {
-    ...data,
-    price: Number(data.price),
-    stock_count: Number(data.stock_count),
-    images: data.images ?? [],
-    style: isFurnitureStyle(data.style) ? data.style : null,
-  } satisfies Product;
+  return normalizeProduct(data as ProductWithCategoryRow);
 }
 
-export async function deleteProduct(productId: string) {
-  if (!isSupabaseConfigured) {
-    await delay(180);
-    return productId;
-  }
-
-  const { error } = await supabase.from("products").delete().eq("id", productId);
+export async function deleteProduct(product: Product) {
+  requireSupabaseConfigured();
+  const { error } = await supabase
+    .from("products")
+    .update({ deleted_at: new Date().toISOString(), is_published: false })
+    .eq("id", product.id);
   if (error) throw error;
-  return productId;
+
+  await deleteUploadedProductImages(product.images).catch(() => undefined);
+  return product.id;
 }
 
 export async function toggleProductPublished(product: Product) {
-  if (!isSupabaseConfigured) {
-    await delay(180);
-    return { ...product, is_published: !product.is_published };
-  }
-
+  requireSupabaseConfigured();
   const { data, error } = await supabase
     .from("products")
     .update({ is_published: !product.is_published })
     .eq("id", product.id)
-    .select("*")
+    .select("*, categories(*)")
     .single();
   if (error) throw error;
-
-  return {
-    ...data,
-    price: Number(data.price),
-    stock_count: Number(data.stock_count),
-    images: data.images ?? [],
-    style: isFurnitureStyle(data.style) ? data.style : null,
-  } satisfies Product;
+  return normalizeProduct(data as ProductWithCategoryRow);
 }
 
 export async function updateProduct(product: Product) {
-  if (!isSupabaseConfigured) {
-    await delay(220);
-    return product;
-  }
-
+  requireSupabaseConfigured();
   const { data, error } = await supabase
     .from("products")
     .update({
+      category_id: product.category_id,
       title: product.title,
       description: product.description,
       price: product.price,
       stock_count: product.stock_count,
+      images: product.images,
       material: product.material,
       color: product.color,
       style: product.style,
@@ -222,40 +201,22 @@ export async function updateProduct(product: Product) {
       is_published: product.is_published,
     })
     .eq("id", product.id)
-    .select("*")
+    .select("*, categories(*)")
     .single();
   if (error) throw error;
-
-  return {
-    ...product,
-    ...data,
-    price: Number(data.price),
-    stock_count: Number(data.stock_count),
-    images: data.images ?? product.images,
-    style: isFurnitureStyle(data.style) ? data.style : null,
-  } satisfies Product;
+  return normalizeProduct(data as ProductWithCategoryRow);
 }
 
 export function useCategories() {
-  return useQuery({
-    queryKey: ["categories"],
-    queryFn: fetchCategories,
-  });
+  return useQuery({ queryKey: ["categories"], queryFn: fetchCategories });
 }
 
 export function useProducts(filters: ProductFilters) {
-  return useQuery({
-    queryKey: ["products", filters],
-    queryFn: () => fetchProducts(filters),
-  });
+  return useQuery({ queryKey: ["products", filters], queryFn: () => fetchProducts(filters), refetchInterval: 5_000 });
 }
 
 export function useProduct(id: string | undefined) {
-  return useQuery({
-    queryKey: ["product", id],
-    queryFn: () => fetchProduct(id ?? ""),
-    enabled: Boolean(id),
-  });
+  return useQuery({ queryKey: ["product", id], queryFn: () => fetchProduct(id ?? ""), enabled: Boolean(id) });
 }
 
 export function useRelatedProducts(product: Product | null | undefined) {
@@ -271,106 +232,50 @@ export function useRelatedProducts(product: Product | null | undefined) {
 }
 
 export function useSellerProducts(sellerId: string | undefined) {
-  return useQuery({
-    queryKey: ["seller-products", sellerId],
-    queryFn: async () => {
-      const source = isSupabaseConfigured
-        ? await (async () => {
-            const { data, error } = await supabase.from("products").select("*").eq("seller_id", sellerId ?? "");
-            if (error) throw error;
-            return data.map<Product>((row) => ({
-              ...row,
-              price: Number(row.price),
-              stock_count: Number(row.stock_count),
-              images: row.images ?? [],
-              style: isFurnitureStyle(row.style) ? row.style : null,
-            }));
-          })()
-        : demoProducts;
-      return source.filter((product) => !sellerId || product.seller_id === sellerId || sellerId === "demo-seller");
-    },
-    enabled: Boolean(sellerId),
-  });
+  return useQuery({ queryKey: ["seller-products", sellerId], queryFn: fetchManagedProducts, enabled: Boolean(sellerId) });
 }
 
 export function useSellerStats(sellerId: string | undefined) {
   return useQuery({
     queryKey: ["seller-stats", sellerId],
     queryFn: async () => {
-      const products = await fetchProducts({});
-      const sellerProducts = products.filter((product) => !sellerId || product.seller_id === sellerId || sellerId === "demo-seller");
-      const revenue = sellerProducts.reduce((sum, product) => sum + product.price * Math.min(product.popularity ?? 1, 14), 0);
+      requireSupabaseConfigured();
+      const [products, ordersResult] = await Promise.all([
+        fetchManagedProducts(),
+        supabase.from("orders").select("total_price"),
+      ]);
+      if (ordersResult.error) throw ordersResult.error;
+
       return {
-        totalProducts: sellerProducts.length,
-        totalOrders: Math.max(4, Math.round(sellerProducts.length * 2.5)),
-        totalRevenue: revenue,
+        totalProducts: products.length,
+        totalOrders: ordersResult.data.length,
+        totalRevenue: ordersResult.data.reduce((sum, order) => sum + Number(order.total_price), 0),
       };
     },
     enabled: Boolean(sellerId),
   });
 }
 
+function invalidateProductQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ["products"] });
+  queryClient.invalidateQueries({ queryKey: ["seller-products"] });
+  queryClient.invalidateQueries({ queryKey: ["seller-stats"] });
+  queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+}
+
 export function useCreateProduct() {
   const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: createProduct,
-    onSuccess: (product) => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["seller-products", product.seller_id] });
-    },
-    onMutate: async (newProduct) => {
-      await queryClient.cancelQueries({ queryKey: ["products"] });
-      const previousProducts = queryClient.getQueryData<Product[]>(["products", defaultFilters]);
-      const optimisticProduct: Product = {
-        id: crypto.randomUUID(),
-        ...newProduct,
-        category: demoCategories.find((category) => category.id === newProduct.category_id),
-        seller: {
-          id: newProduct.seller_id,
-          full_name: "Uploading seller",
-          avatar_url: null,
-          role: "seller",
-        },
-        created_at: new Date().toISOString(),
-      };
-      queryClient.setQueriesData<Product[]>({ queryKey: ["products"] }, (old = []) => [optimisticProduct, ...old]);
-      return { previousProducts };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previousProducts) {
-        queryClient.setQueryData(["products", defaultFilters], context.previousProducts);
-      }
-    },
-  });
+  return useMutation({ mutationFn: createProduct, onSuccess: () => invalidateProductQueries(queryClient) });
 }
 
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: deleteProduct,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["seller-products"] });
-    },
-  });
+  return useMutation({ mutationFn: deleteProduct, onSuccess: () => invalidateProductQueries(queryClient) });
 }
 
 export function useToggleProductPublished() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: toggleProductPublished,
-    onMutate: async (product) => {
-      await queryClient.cancelQueries({ queryKey: ["seller-products"] });
-      queryClient.setQueriesData<Product[]>({ queryKey: ["seller-products"] }, (old = []) =>
-        old.map((item) => (item.id === product.id ? { ...item, is_published: !item.is_published } : item)),
-      );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["seller-products"] });
-    },
-  });
+  return useMutation({ mutationFn: toggleProductPublished, onSuccess: () => invalidateProductQueries(queryClient) });
 }
 
 export function useUpdateProduct() {
@@ -378,8 +283,7 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: updateProduct,
     onSuccess: (product) => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["seller-products", product.seller_id] });
+      invalidateProductQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: ["product", product.id] });
     },
   });

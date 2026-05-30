@@ -3,7 +3,7 @@ import type { ProductDimensions } from "@/types/product";
 import type { OrderStatus, ShippingAddress } from "@/types/order";
 import type { UserRole } from "@/types/user";
 
-type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   public: {
@@ -66,6 +66,7 @@ export type Database = {
           style: string | null;
           is_published: boolean;
           created_at: string;
+          deleted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -82,6 +83,7 @@ export type Database = {
           style?: string | null;
           is_published?: boolean;
           created_at?: string;
+          deleted_at?: string | null;
         };
         Update: {
           category_id?: string;
@@ -95,6 +97,7 @@ export type Database = {
           color?: string | null;
           style?: string | null;
           is_published?: boolean;
+          deleted_at?: string | null;
         };
         Relationships: [
           {
@@ -116,7 +119,7 @@ export type Database = {
       orders: {
         Row: {
           id: string;
-          buyer_id: string;
+          buyer_id: string | null;
           status: OrderStatus;
           total_price: number;
           shipping_address: ShippingAddress;
@@ -124,7 +127,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          buyer_id: string;
+          buyer_id?: string | null;
           status?: OrderStatus;
           total_price: number;
           shipping_address: ShippingAddress;
@@ -149,20 +152,23 @@ export type Database = {
         Row: {
           id: string;
           order_id: string;
-          product_id: string;
+          product_id: string | null;
+          product_title: string | null;
           quantity: number;
           price_at_purchase: number;
         };
         Insert: {
           id?: string;
           order_id: string;
-          product_id: string;
+          product_id?: string | null;
+          product_title?: string | null;
           quantity: number;
           price_at_purchase: number;
         };
         Update: {
           quantity?: number;
           price_at_purchase?: number;
+          product_title?: string | null;
         };
         Relationships: [
           {
@@ -183,7 +189,15 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      place_public_order: {
+        Args: {
+          shipping: ShippingAddress;
+          items: Json;
+        };
+        Returns: string;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
@@ -198,8 +212,8 @@ export const isSupabaseConfigured =
   supabaseAnonKey !== "your-anon-key";
 
 export const supabase = createClient<Database>(
-  supabaseUrl ?? "https://demo.supabase.co",
-  supabaseAnonKey ?? "demo-anon-key",
+  supabaseUrl ?? "https://placeholder.supabase.co",
+  supabaseAnonKey ?? "placeholder-anon-key",
   {
     auth: {
       persistSession: true,
@@ -208,6 +222,20 @@ export const supabase = createClient<Database>(
     },
   },
 );
+
+export function requireSupabaseConfigured() {
+  if (!isSupabaseConfigured) {
+    throw new Error("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.local.");
+  }
+}
+
+export function getSupabaseErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
+  }
+  return "Check your Supabase configuration and apply the database migration.";
+}
 
 export function jsonToShippingAddress(value: Json | ShippingAddress | null): ShippingAddress {
   if (!value || typeof value !== "object" || Array.isArray(value)) {

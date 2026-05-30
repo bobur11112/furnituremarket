@@ -10,18 +10,24 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Set these values in `.env.local`:
+Create `.env.local` and set these values from your active Supabase project:
 
 ```bash
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Without Supabase credentials, the app runs against a local demo catalog and demo auth flow. Use `seller@mobel.test` with password `password` to enter the seller dashboard.
+Supabase is required. The application does not use a local catalog, local orders, or frontend admin passwords.
 
 ## Supabase
 
-Apply the migration in `supabase/migrations/20260530170000_create_mobel_marketplace.sql`. It creates marketplace tables, seeded categories, row level security policies, a public `product-images` storage bucket, and realtime support for order status updates.
+1. Apply `supabase/migrations/20260530170000_create_mobel_marketplace.sql` in the Supabase SQL editor.
+2. Create the administrator in Supabase Authentication with email and password.
+3. Sign in to the application with that email and password. No extra role query is required.
+
+The migration creates marketplace tables, seeded categories, Row Level Security policies, the public `product-images` Storage bucket, image limits, guest checkout RPC, and realtime support for order status updates.
+
+Customers do not need an account. Checkout creates a guest order through `place_public_order`. Every user that you manually add in Supabase Authentication can manage products, images, and orders after signing in.
 
 ## Scripts
 

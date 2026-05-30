@@ -17,8 +17,8 @@ export function Footer() {
           <Link className="text-muted-foreground hover:text-primary" to="/catalog">
             Catalog
           </Link>
-          <Link className="text-muted-foreground hover:text-primary" to="/seller/dashboard">
-            Seller dashboard
+          <Link className="text-muted-foreground hover:text-primary" to="/admin">
+            Admin panel
           </Link>
         </div>
         <div className="grid gap-2 text-sm">

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Armchair } from "lucide-react";
+import { AlertCircle, Armchair } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Product } from "@/types/product";
@@ -12,10 +12,11 @@ const containerVariants = {
 type ProductGridProps = {
   products: Product[];
   isLoading?: boolean;
+  errorMessage?: string;
   onClearFilters?: () => void;
 };
 
-export function ProductGrid({ products, isLoading = false, onClearFilters }: ProductGridProps) {
+export function ProductGrid({ products, isLoading = false, errorMessage, onClearFilters }: ProductGridProps) {
   if (isLoading) {
     return (
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -26,6 +27,18 @@ export function ProductGrid({ products, isLoading = false, onClearFilters }: Pro
             <Skeleton className="mt-3 h-4 w-1/2" />
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="grid min-h-72 place-items-center rounded-lg border border-destructive/40 bg-card p-8 text-center">
+        <div className="max-w-md">
+          <AlertCircle className="mx-auto h-12 w-12 text-destructive" aria-hidden="true" />
+          <h2 className="mt-4 text-2xl font-semibold">Catalog is unavailable</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
+        </div>
       </div>
     );
   }

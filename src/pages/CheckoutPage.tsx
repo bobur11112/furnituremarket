@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, CreditCard, Loader2, MapPin, UserRound } from "lucide-react";
+import { Check, Loader2, MapPin, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/toast";
 import { PageWrapper } from "@/components/layout/PageWrapper";
-import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { formatPrice } from "@/lib/utils";
@@ -20,24 +19,21 @@ import { checkoutSchema, type CheckoutFormValues } from "@/schemas/order.schema"
 const steps = [
   { title: "Contact", icon: UserRound, fields: ["fullName", "email", "phone"] as const },
   { title: "Shipping", icon: MapPin, fields: ["address", "city"] as const },
-  { title: "Payment", icon: CreditCard, fields: ["paymentMethod"] as const },
 ];
 
 export function CheckoutPage() {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { items, subtotal, clearCart } = useCart();
   const createOrderMutation = useCreateOrder();
   const methods = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       fullName: "",
-      email: user?.email ?? "",
+      email: "",
       phone: "",
       address: "",
       city: "",
-      paymentMethod: "card",
     },
   });
 
@@ -47,13 +43,13 @@ export function CheckoutPage() {
   }
 
   async function onSubmit(values: CheckoutFormValues) {
-    if (!user || items.length === 0) return;
+    if (items.length === 0) return;
 
     try {
-      await createOrderMutation.mutateAsync({ buyerId: user.id, checkout: values, items });
+      await createOrderMutation.mutateAsync({ checkout: values, items });
       clearCart();
       toast({ title: "Order placed", description: "Your seller will confirm availability shortly." });
-      navigate("/profile?order=success");
+      navigate("/catalog");
     } catch (error) {
       toast({
         title: "Checkout failed",
@@ -89,7 +85,7 @@ export function CheckoutPage() {
         <form onSubmit={methods.handleSubmit(onSubmit)} className="grid gap-8 lg:grid-cols-[1fr_24rem]">
           <Card>
             <CardContent className="p-6">
-              <div className="mb-8 grid grid-cols-3 gap-3">
+              <div className="mb-8 grid grid-cols-2 gap-3">
                 {steps.map((item, index) => (
                   <div
                     key={item.title}
@@ -122,19 +118,6 @@ export function CheckoutPage() {
                       <Field id="address" label="Street address" error={methods.formState.errors.address?.message} />
                       <Field id="city" label="City" error={methods.formState.errors.city?.message} />
                     </>
-                  ) : null}
-                  {step === 2 ? (
-                    <div className="grid gap-3">
-                      <Label htmlFor="paymentMethod">Payment method</Label>
-                      <select
-                        id="paymentMethod"
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        {...methods.register("paymentMethod")}
-                      >
-                        <option value="card">Card</option>
-                        <option value="cash_on_delivery">Cash on delivery</option>
-                      </select>
-                    </div>
                   ) : null}
                 </motion.div>
               </AnimatePresence>

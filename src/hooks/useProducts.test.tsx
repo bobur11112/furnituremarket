@@ -2,14 +2,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PropsWithChildren } from "react";
-import type { ProductFilters } from "@/types/product";
+import { testProducts } from "@/test/fixtures";
+import { catalogMaxPrice, type ProductFilters } from "@/types/product";
 
 const filters: ProductFilters = {
   categories: [],
   styles: [],
   materials: [],
   minPrice: 0,
-  maxPrice: 10000,
+  maxPrice: catalogMaxPrice,
   sort: "newest",
   search: "",
 };
@@ -29,7 +30,22 @@ describe("useProducts", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns loading and success states with local demo data", async () => {
+  it("returns loading and success states with Supabase data", async () => {
+    vi.doMock("@/lib/supabase", () => ({
+      requireSupabaseConfigured: () => undefined,
+      supabase: {
+        from: () => ({
+          select: () => ({
+            is: () => ({
+              eq: () => ({
+                order: () => Promise.resolve({ data: testProducts, error: null }),
+              }),
+            }),
+          }),
+        }),
+      },
+    }));
+
     const { useProducts } = await import("./useProducts");
     const { result } = renderHook(() => useProducts(filters), { wrapper: createWrapper() });
 
@@ -42,18 +58,17 @@ describe("useProducts", () => {
   it("surfaces Supabase errors", async () => {
     const supabaseError = new Error("Supabase is unavailable");
     vi.doMock("@/lib/supabase", () => ({
-      isSupabaseConfigured: true,
+      requireSupabaseConfigured: () => undefined,
       supabase: {
-        from: (table: string) =>
-          table === "categories"
-            ? {
-                select: () => Promise.resolve({ data: [], error: null }),
-              }
-            : {
-                select: () => ({
-                  eq: () => Promise.resolve({ data: [], error: supabaseError }),
-                }),
-              },
+        from: () => ({
+          select: () => ({
+            is: () => ({
+              eq: () => ({
+                order: () => Promise.resolve({ data: [], error: supabaseError }),
+              }),
+            }),
+          }),
+        }),
       },
     }));
 

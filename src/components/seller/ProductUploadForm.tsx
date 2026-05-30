@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
-import { uploadProductImages, useCategories, useCreateProduct } from "@/hooks/useProducts";
+import { deleteUploadedProductImages, uploadProductImages, useCategories, useCreateProduct } from "@/hooks/useProducts";
 import { productSchema, type ProductFormValues } from "@/schemas/product.schema";
 import { cn } from "@/lib/utils";
 
@@ -73,12 +73,16 @@ export function ProductUploadForm() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
     maxFiles: 6,
+    maxSize: 5 * 1024 * 1024,
     onDrop: (acceptedFiles) => setFiles((current) => [...current, ...acceptedFiles].slice(0, 6)),
+    onDropRejected: () => {
+      toast({ title: "Image rejected", description: "Use up to 6 JPG, PNG, or WebP images, maximum 5 MB each.", variant: "destructive" });
+    },
   });
 
   async function onSubmit(values: ProductFormValues) {
     if (!user) {
-      toast({ title: "Sign in required", description: "Use a seller account to publish products.", variant: "destructive" });
+      toast({ title: "Sign in required", description: "Use an admin account to publish products.", variant: "destructive" });
       return;
     }
 
@@ -87,9 +91,10 @@ export function ProductUploadForm() {
       return;
     }
 
+    let imageUrls: string[] = [];
     try {
       setUploadProgress(18);
-      const imageUrls = await uploadProductImages(files);
+      imageUrls = await uploadProductImages(files);
       setUploadProgress(72);
       await createProductMutation.mutateAsync({
         ...values,
@@ -103,6 +108,7 @@ export function ProductUploadForm() {
       setFiles([]);
       window.setTimeout(() => setUploadProgress(0), 800);
     } catch (error) {
+      if (imageUrls.length > 0) await deleteUploadedProductImages(imageUrls).catch(() => undefined);
       toast({
         title: "Upload failed",
         description: error instanceof Error ? error.message : "Please try again.",

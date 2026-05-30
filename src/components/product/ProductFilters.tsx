@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { formatPrice } from "@/lib/utils";
-import type { Category, FurnitureStyle, ProductFilters as ProductFiltersType, ProductSort } from "@/types/product";
+import { catalogMaxPrice, type Category, type FurnitureStyle, type ProductFilters as ProductFiltersType, type ProductSort } from "@/types/product";
 
 const styles: Array<{ value: FurnitureStyle; label: string }> = [
   { value: "modern", label: "Modern" },
@@ -70,11 +70,11 @@ function FilterContent({ filters, categories, materials, onChange, onClear }: Pr
         </div>
         <Slider
           min={0}
-          max={10000}
-          step={100}
+          max={catalogMaxPrice}
+          step={1000}
           value={[filters.minPrice, filters.maxPrice]}
           onValueChange={(value) => {
-            const [minPrice = 0, maxPrice = 10000] = value;
+            const [minPrice = 0, maxPrice = catalogMaxPrice] = value;
             onChange({ ...filters, minPrice, maxPrice });
           }}
           aria-label="Price range"

@@ -13,7 +13,8 @@ export type ShippingAddress = {
 export type OrderItem = {
   id: string;
   order_id: string;
-  product_id: string;
+  product_id: string | null;
+  product_title?: string | null;
   quantity: number;
   price_at_purchase: number;
   product?: Product;
@@ -21,7 +22,7 @@ export type OrderItem = {
 
 export type Order = {
   id: string;
-  buyer_id: string;
+  buyer_id: string | null;
   status: OrderStatus;
   total_price: number;
   shipping_address: ShippingAddress;
@@ -29,6 +30,4 @@ export type Order = {
   order_items?: OrderItem[];
 };
 
-export type CheckoutInput = ShippingAddress & {
-  paymentMethod: "card" | "cash_on_delivery";
-};
+export type CheckoutInput = ShippingAddress;

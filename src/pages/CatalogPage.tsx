@@ -7,7 +7,8 @@ import { ProductFilters } from "@/components/product/ProductFilters";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { useCategories, useProducts } from "@/hooks/useProducts";
 import { listToSearchParam, parseSearchList } from "@/lib/utils";
-import type { FurnitureStyle, ProductFilters as ProductFiltersType } from "@/types/product";
+import { getSupabaseErrorMessage } from "@/lib/supabase";
+import { catalogMaxPrice, type FurnitureStyle, type ProductFilters as ProductFiltersType } from "@/types/product";
 
 const validStyles: FurnitureStyle[] = ["modern", "classic", "scandinavian", "industrial", "minimalist"];
 const materials = ["Boucle", "Travertine", "Oak", "Alabaster", "Leather", "Marble"];
@@ -26,7 +27,7 @@ export function CatalogPage() {
       styles: parseStyles(searchParams.get("styles")),
       materials: parseSearchList(searchParams.get("materials")),
       minPrice: Number(searchParams.get("min") ?? 0),
-      maxPrice: Number(searchParams.get("max") ?? 10000),
+      maxPrice: Number(searchParams.get("max") ?? catalogMaxPrice),
       sort: (searchParams.get("sort") as ProductFiltersType["sort"] | null) ?? "newest",
       search: searchParams.get("q") ?? "",
     }),
@@ -34,6 +35,7 @@ export function CatalogPage() {
   );
 
   const productsQuery = useProducts(filters);
+  const queryError = productsQuery.error ?? categoriesQuery.error;
 
   function updateFilters(nextFilters: ProductFiltersType) {
     const next = new URLSearchParams();
@@ -44,7 +46,7 @@ export function CatalogPage() {
     if (styles) next.set("styles", styles);
     if (selectedMaterials) next.set("materials", selectedMaterials);
     if (nextFilters.minPrice > 0) next.set("min", String(nextFilters.minPrice));
-    if (nextFilters.maxPrice < 10000) next.set("max", String(nextFilters.maxPrice));
+    if (nextFilters.maxPrice < catalogMaxPrice) next.set("max", String(nextFilters.maxPrice));
     if (nextFilters.sort !== "newest") next.set("sort", nextFilters.sort);
     if (nextFilters.search.trim()) next.set("q", nextFilters.search.trim());
     setSearchParams(next, { replace: true });
@@ -87,6 +89,7 @@ export function CatalogPage() {
           <ProductGrid
             products={productsQuery.data ?? []}
             isLoading={productsQuery.isLoading || categoriesQuery.isLoading}
+            errorMessage={queryError ? getSupabaseErrorMessage(queryError) : undefined}
             onClearFilters={() => setSearchParams({}, { replace: true })}
           />
         </section>

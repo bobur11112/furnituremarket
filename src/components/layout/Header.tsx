@@ -17,8 +17,6 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Catalog", href: "/catalog" },
-  { label: "Sell", href: "/seller/dashboard" },
-  { label: "Profile", href: "/profile" },
 ];
 
 function NavItem({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
@@ -47,6 +45,8 @@ export function Header() {
 
   useMotionValueEvent(scrollY, "change", (latest) => setScrolled(latest > 24));
 
+  const visibleNavItems = profile?.role === "admin" ? [...navItems, { label: "Admin", href: "/admin" }] : navItems;
+
   return (
     <motion.header
       initial={{ y: -18, opacity: 0 }}
@@ -70,7 +70,7 @@ export function Header() {
                 <SheetDescription>Curated furniture for rooms with a point of view.</SheetDescription>
               </SheetHeader>
               <nav className="mt-8 grid gap-5">
-                {navItems.map((item) => (
+                {visibleNavItems.map((item) => (
                   <NavItem key={item.href} {...item} onClick={() => setMobileOpen(false)} />
                 ))}
               </nav>
@@ -83,7 +83,7 @@ export function Header() {
         </div>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary navigation">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavItem key={item.href} {...item} />
           ))}
         </nav>
@@ -103,9 +103,9 @@ export function Header() {
             ) : null}
           </Button>
           <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
-            <Link to={user ? "/profile" : "/auth"}>
+            <Link to={user ? "/admin" : "/auth"}>
               <UserRound className="h-4 w-4" />
-              {profile?.full_name ?? (user ? "Account" : "Sign in")}
+              {profile?.full_name ?? (user ? "Admin" : "Admin sign in")}
             </Link>
           </Button>
         </div>

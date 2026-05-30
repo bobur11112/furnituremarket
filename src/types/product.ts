@@ -1,5 +1,7 @@
 export type FurnitureStyle = "modern" | "classic" | "scandinavian" | "industrial" | "minimalist";
 
+export const catalogMaxPrice = 100_000_000;
+
 export type DimensionUnit = "cm" | "inch";
 
 export type ProductDimensions = {
@@ -40,6 +42,7 @@ export type Product = {
   style: FurnitureStyle | null;
   is_published: boolean;
   created_at: string;
+  deleted_at: string | null;
   category?: Category;
   seller?: SellerSummary;
   badge?: ProductBadge;

@@ -6,13 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { useProducts } from "@/hooks/useProducts";
+import { getSupabaseErrorMessage } from "@/lib/supabase";
+import { catalogMaxPrice } from "@/types/product";
 
 const featuredFilters = {
   categories: [],
   styles: [],
   materials: [],
   minPrice: 0,
-  maxPrice: 10000,
+  maxPrice: catalogMaxPrice,
   sort: "popular" as const,
   search: "",
 };
@@ -49,9 +51,6 @@ export function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/seller/dashboard">Sell with Möbel</Link>
-              </Button>
             </div>
           </motion.div>
         </div>
@@ -83,7 +82,11 @@ export function HomePage() {
             <Link to="/catalog">View all products</Link>
           </Button>
         </div>
-        <ProductGrid products={featuredProducts} isLoading={productsQuery.isLoading} />
+        <ProductGrid
+          products={featuredProducts}
+          isLoading={productsQuery.isLoading}
+          errorMessage={productsQuery.error ? getSupabaseErrorMessage(productsQuery.error) : undefined}
+        />
       </section>
     </PageWrapper>
   );

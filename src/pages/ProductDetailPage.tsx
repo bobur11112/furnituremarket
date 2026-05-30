@@ -12,6 +12,7 @@ import { ProductImageGallery } from "@/components/product/ProductImageGallery";
 import { useCart } from "@/hooks/useCart";
 import { useProduct, useRelatedProducts } from "@/hooks/useProducts";
 import { formatPrice, getInitials } from "@/lib/utils";
+import { getSupabaseErrorMessage } from "@/lib/supabase";
 
 export function ProductDetailPage() {
   const { id } = useParams();
@@ -32,7 +33,8 @@ export function ProductDetailPage() {
     return (
       <PageWrapper className="container grid min-h-[70vh] place-items-center py-10 text-center">
         <div>
-          <h1 className="text-3xl font-semibold">Product not found</h1>
+          <h1 className="text-3xl font-semibold">{productQuery.isError ? "Catalog is unavailable" : "Product not found"}</h1>
+          {productQuery.error ? <p className="mt-2 text-sm text-destructive">{getSupabaseErrorMessage(productQuery.error)}</p> : null}
           <Button className="mt-5" asChild>
             <Link to="/catalog">Back to catalog</Link>
           </Button>

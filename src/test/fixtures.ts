@@ -1,0 +1,38 @@
+import type { Product } from "@/types/product";
+
+export const testProducts: Product[] = [
+  {
+    id: "33333333-3333-4333-8333-333333333301",
+    seller_id: "11111111-1111-4111-8111-111111111111",
+    category_id: "22222222-2222-4222-8222-222222222201",
+    title: "Aster Boucle Lounge Chair",
+    description: "A sculptural lounge chair wrapped in soft ivory boucle.",
+    price: 1480,
+    stock_count: 8,
+    images: ["https://example.com/chair.jpg"],
+    dimensions: { width: 84, height: 76, depth: 91, unit: "cm" },
+    material: "Boucle",
+    color: "Ivory",
+    style: "modern",
+    is_published: true,
+    created_at: "2026-05-12T08:00:00.000Z",
+    deleted_at: null,
+  },
+  {
+    id: "33333333-3333-4333-8333-333333333302",
+    seller_id: "11111111-1111-4111-8111-111111111111",
+    category_id: "22222222-2222-4222-8222-222222222202",
+    title: "Marceau Dining Table",
+    description: "A generous dining table with a tactile stone top.",
+    price: 3890,
+    stock_count: 4,
+    images: ["https://example.com/table.jpg"],
+    dimensions: { width: 220, height: 75, depth: 96, unit: "cm" },
+    material: "Travertine",
+    color: "Sand",
+    style: "classic",
+    is_published: true,
+    created_at: "2026-04-29T08:00:00.000Z",
+    deleted_at: null,
+  },
+];

@@ -1,8 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -10,7 +8,7 @@ export function AuthPage() {
   const { user, profile } = useAuth();
 
   if (user) {
-    return <Navigate to={profile?.role === "seller" ? "/seller/dashboard" : "/profile"} replace />;
+    return <Navigate to="/admin" replace />;
   }
 
   return (
@@ -33,20 +31,9 @@ export function AuthPage() {
             <div className="mb-8">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Account</p>
               <h1 className="mt-2 font-display text-4xl font-bold">Welcome to Möbel</h1>
-              <p className="mt-3 text-muted-foreground">Use demo credentials or connect Supabase Auth for production.</p>
+              <p className="mt-3 text-muted-foreground">Sign in to manage products and customer orders.</p>
             </div>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              <TabsContent value="login" className="mt-6">
-                <LoginForm />
-              </TabsContent>
-              <TabsContent value="register" className="mt-6">
-                <RegisterForm />
-              </TabsContent>
-            </Tabs>
+            <LoginForm />
           </CardContent>
         </Card>
       </div>

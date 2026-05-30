@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { products } from "@/lib/mockData";
+import { testProducts as products } from "@/test/fixtures";
 import { useCartStore } from "./cartStore";
 
 describe("cartStore", () => {

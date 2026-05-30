@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,11 +14,10 @@ type LocationState = {
 };
 
 export function LoginForm() {
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const from = (location.state as LocationState | null)?.from ?? "/profile";
+  const from = (location.state as LocationState | null)?.from ?? "/admin";
 
   const {
     register,
@@ -27,7 +25,7 @@ export function LoginForm() {
     formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "seller@mobel.test", password: "password" },
+    defaultValues: { email: "", password: "" },
   });
 
   async function onSubmit(values: LoginValues) {
@@ -36,25 +34,14 @@ export function LoginForm() {
       toast({ title: "Welcome back", description: "Your marketplace session is ready." });
       navigate(from, { replace: true });
     } catch (error) {
+      const message = error instanceof Error ? error.message : "";
       toast({
         title: "Sign in failed",
-        description: error instanceof Error ? error.message : "Check your credentials and try again.",
+        description: message.toLowerCase().includes("invalid login credentials")
+          ? "Supabase rejected this email and password. Create the administrator in Supabase Authentication or reset its password."
+          : message || "Check your credentials and try again.",
         variant: "destructive",
       });
-    }
-  }
-
-  async function handleGoogle() {
-    try {
-      setGoogleLoading(true);
-      await signInWithGoogle();
-    } catch (error) {
-      toast({
-        title: "Google sign in failed",
-        description: error instanceof Error ? error.message : "OAuth is unavailable right now.",
-        variant: "destructive",
-      });
-      setGoogleLoading(false);
     }
   }
 
@@ -73,10 +60,6 @@ export function LoginForm() {
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         Sign in
-      </Button>
-      <Button type="button" variant="outline" onClick={handleGoogle} disabled={googleLoading}>
-        {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-        Continue with Google
       </Button>
     </form>
   );
