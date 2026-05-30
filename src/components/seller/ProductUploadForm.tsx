@@ -1,0 +1,268 @@
+import { useEffect, useMemo, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { ImagePlus, Loader2, UploadCloud, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
+import { useAuth } from "@/hooks/useAuth";
+import { uploadProductImages, useCategories, useCreateProduct } from "@/hooks/useProducts";
+import { productSchema, type ProductFormValues } from "@/schemas/product.schema";
+import { cn } from "@/lib/utils";
+
+const defaultValues: ProductFormValues = {
+  title: "",
+  description: "",
+  price: 0,
+  stock_count: 1,
+  category_id: "",
+  material: "",
+  color: "",
+  style: "modern",
+  dimensions: {
+    width: 1,
+    height: 1,
+    depth: 1,
+    unit: "cm",
+  },
+};
+
+export function ProductUploadForm() {
+  const { user } = useAuth();
+  const categoriesQuery = useCategories();
+  const createProductMutation = useCreateProduct();
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const previews = useMemo(
+    () =>
+      files.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      })),
+    [files],
+  );
+
+  useEffect(
+    () => () => {
+      previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    },
+    [previews],
+  );
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues,
+  });
+
+  useEffect(() => {
+    const firstCategory = categoriesQuery.data?.[0];
+    if (firstCategory) setValue("category_id", firstCategory.id);
+  }, [categoriesQuery.data, setValue]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
+    maxFiles: 6,
+    onDrop: (acceptedFiles) => setFiles((current) => [...current, ...acceptedFiles].slice(0, 6)),
+  });
+
+  async function onSubmit(values: ProductFormValues) {
+    if (!user) {
+      toast({ title: "Sign in required", description: "Use a seller account to publish products.", variant: "destructive" });
+      return;
+    }
+
+    if (files.length === 0) {
+      toast({ title: "Images required", description: "Add at least one product image.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      setUploadProgress(18);
+      const imageUrls = await uploadProductImages(files);
+      setUploadProgress(72);
+      await createProductMutation.mutateAsync({
+        ...values,
+        seller_id: user.id,
+        images: imageUrls,
+        is_published: true,
+      });
+      setUploadProgress(100);
+      toast({ title: "Product published", description: `${values.title} is now in the catalog.` });
+      reset(defaultValues);
+      setFiles([]);
+      window.setTimeout(() => setUploadProgress(0), 800);
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+      setUploadProgress(0);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6 lg:grid-cols-[1fr_24rem]">
+      <div className="grid gap-6">
+        <Card>
+          <CardContent className="grid gap-5 p-5">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Title</Label>
+              <Input id="title" {...register("title")} />
+              {errors.title ? <p className="text-sm text-destructive">{errors.title.message}</p> : null}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea id="description" {...register("description")} />
+              {errors.description ? <p className="text-sm text-destructive">{errors.description.message}</p> : null}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="price">Price</Label>
+                <Input id="price" type="number" min="0" step="1" {...register("price", { valueAsNumber: true })} />
+                {errors.price ? <p className="text-sm text-destructive">{errors.price.message}</p> : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="stock">Stock</Label>
+                <Input id="stock" type="number" min="0" step="1" {...register("stock_count", { valueAsNumber: true })} />
+                {errors.stock_count ? <p className="text-sm text-destructive">{errors.stock_count.message}</p> : null}
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category</Label>
+                <select
+                  id="category"
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  {...register("category_id")}
+                >
+                  {categoriesQuery.data?.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.category_id ? <p className="text-sm text-destructive">{errors.category_id.message}</p> : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="style">Style</Label>
+                <select
+                  id="style"
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  {...register("style")}
+                >
+                  <option value="modern">Modern</option>
+                  <option value="classic">Classic</option>
+                  <option value="scandinavian">Scandinavian</option>
+                  <option value="industrial">Industrial</option>
+                  <option value="minimalist">Minimalist</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="material">Material</Label>
+                <Input id="material" {...register("material")} />
+                {errors.material ? <p className="text-sm text-destructive">{errors.material.message}</p> : null}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="color">Color</Label>
+                <Input id="color" {...register("color")} />
+                {errors.color ? <p className="text-sm text-destructive">{errors.color.message}</p> : null}
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-4">
+              <div className="grid gap-2">
+                <Label htmlFor="width">Width</Label>
+                <Input id="width" type="number" {...register("dimensions.width", { valueAsNumber: true })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="height">Height</Label>
+                <Input id="height" type="number" {...register("dimensions.height", { valueAsNumber: true })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="depth">Depth</Label>
+                <Input id="depth" type="number" {...register("dimensions.depth", { valueAsNumber: true })} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="unit">Unit</Label>
+                <select
+                  id="unit"
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  {...register("dimensions.unit")}
+                >
+                  <option value="cm">cm</option>
+                  <option value="inch">inch</option>
+                </select>
+              </div>
+            </div>
+            {errors.dimensions ? <p className="text-sm text-destructive">All dimensions must be positive.</p> : null}
+          </CardContent>
+        </Card>
+      </div>
+
+      <aside className="grid gap-5 self-start">
+        <Card>
+          <CardContent className="grid gap-4 p-5">
+            <div
+              {...getRootProps()}
+              className={cn(
+                "grid min-h-52 cursor-pointer place-items-center rounded-lg border border-dashed border-border bg-background p-6 text-center transition-colors",
+                isDragActive && "border-primary bg-primary/10",
+              )}
+            >
+              <input {...getInputProps()} aria-label="Upload product images" />
+              <div>
+                <UploadCloud className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
+                <p className="mt-3 font-medium">Drop product images</p>
+                <p className="mt-1 text-sm text-muted-foreground">JPG, PNG, or WebP. Up to 6 images.</p>
+              </div>
+            </div>
+            {previews.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {previews.map((preview) => (
+                  <div key={preview.url} className="relative aspect-square overflow-hidden rounded-md border border-border">
+                    <img src={preview.url} alt={preview.file.name} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFiles((current) => current.filter((file) => file !== preview.file))}
+                      className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-foreground"
+                      aria-label={`Remove ${preview.file.name}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-md bg-secondary p-3 text-sm text-muted-foreground">
+                <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                Images preview here before upload.
+              </div>
+            )}
+            {uploadProgress > 0 ? (
+              <div className="h-2 overflow-hidden rounded-full bg-secondary" aria-label="Upload progress">
+                <div className="h-full bg-primary transition-all" style={{ width: `${uploadProgress}%` }} />
+              </div>
+            ) : null}
+            <Button type="submit" disabled={isSubmitting || createProductMutation.isPending}>
+              {isSubmitting || createProductMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Publish product
+            </Button>
+          </CardContent>
+        </Card>
+      </aside>
+    </form>
+  );
+}

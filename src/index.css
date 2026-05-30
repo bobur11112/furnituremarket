@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #0f0e0d;
+    --bg-card: #1a1917;
+    --bg-elevated: #242220;
+    --accent-raw: #c9a96e;
+    --accent-hover: #e2c08a;
+    --text-primary: #f5f0e8;
+    --text-secondary: #a09880;
+    --text-muted: #6b6355;
+    --border-raw: #2e2b26;
+    --border-subtle: #201e1b;
+
+    --background: 30 7% 5%;
+    --foreground: 37 39% 94%;
+    --card: 30 6% 10%;
+    --card-foreground: 37 39% 94%;
+    --popover: 30 6% 10%;
+    --popover-foreground: 37 39% 94%;
+    --primary: 39 46% 61%;
+    --primary-foreground: 30 7% 5%;
+    --secondary: 30 8% 14%;
+    --secondary-foreground: 37 39% 94%;
+    --muted: 30 8% 14%;
+    --muted-foreground: 37 14% 56%;
+    --accent: 39 46% 61%;
+    --accent-foreground: 30 7% 5%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 37 39% 94%;
+    --border: 35 10% 16%;
+    --input: 35 10% 16%;
+    --ring: 39 46% 61%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-foreground antialiased;
+    background:
+      radial-gradient(circle at top left, rgba(201, 169, 110, 0.12), transparent 34rem),
+      linear-gradient(180deg, #11100f 0%, #0f0e0d 48%, #11100f 100%);
+  }
+
+  ::selection {
+    background: rgba(201, 169, 110, 0.35);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
