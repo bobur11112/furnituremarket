@@ -7,8 +7,8 @@
     --bg-primary: #0f0e0d;
     --bg-card: #1a1917;
     --bg-elevated: #242220;
-    --accent-raw: #c9a96e;
-    --accent-hover: #e2c08a;
+    --accent-raw: #bd9b63;
+    --accent-hover: #d4b477;
     --text-primary: #f5f0e8;
     --text-secondary: #a09880;
     --text-muted: #6b6355;
@@ -21,7 +21,7 @@
     --card-foreground: 37 39% 94%;
     --popover: 30 6% 10%;
     --popover-foreground: 37 39% 94%;
-    --primary: 39 46% 61%;
+    --primary: 38 42% 56%;
     --primary-foreground: 30 7% 5%;
     --secondary: 30 8% 14%;
     --secondary-foreground: 37 39% 94%;
@@ -33,7 +33,7 @@
     --destructive-foreground: 37 39% 94%;
     --border: 35 10% 16%;
     --input: 35 10% 16%;
-    --ring: 39 46% 61%;
+    --ring: 38 42% 56%;
     --radius: 0.5rem;
   }
 
@@ -48,9 +48,7 @@
 
   body {
     @apply min-h-screen bg-background font-sans text-foreground antialiased;
-    background:
-      radial-gradient(circle at top left, rgba(201, 169, 110, 0.12), transparent 34rem),
-      linear-gradient(180deg, #11100f 0%, #0f0e0d 48%, #11100f 100%);
+    background: #0f0e0d;
   }
 
   ::selection {

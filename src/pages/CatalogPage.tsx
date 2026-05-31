@@ -9,9 +9,10 @@ import { useCategories, useProducts } from "@/hooks/useProducts";
 import { listToSearchParam, parseSearchList } from "@/lib/utils";
 import { getSupabaseErrorMessage } from "@/lib/supabase";
 import { catalogMaxPrice, type FurnitureStyle, type ProductFilters as ProductFiltersType } from "@/types/product";
+import { useLocale } from "@/contexts/LocaleContext";
 
 const validStyles: FurnitureStyle[] = ["modern", "classic", "scandinavian", "industrial", "minimalist"];
-const materials = ["Boucle", "Travertine", "Oak", "Alabaster", "Leather", "Marble"];
+const materials = ["Холст", "Акрил", "Масло", "Текстурная паста", "Смешанная техника"];
 
 function parseStyles(value: string | null) {
   return parseSearchList(value).filter((style): style is FurnitureStyle => validStyles.includes(style as FurnitureStyle));
@@ -20,6 +21,7 @@ function parseStyles(value: string | null) {
 export function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoriesQuery = useCategories();
+  const { t } = useLocale();
 
   const filters = useMemo<ProductFiltersType>(
     () => ({
@@ -56,20 +58,18 @@ export function CatalogPage() {
     <PageWrapper className="container py-10">
       <div className="mb-8 flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Catalog</p>
-          <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">Curated furniture</h1>
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            Filter by material, silhouette, and price to build a room with intention.
-          </p>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">{t("catalogEyebrow")}</p>
+          <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">{t("catalogTitle")}</h1>
+          <p className="mt-3 max-w-2xl text-muted-foreground">{t("catalogBody")}</p>
         </div>
         <div className="relative w-full lg:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={filters.search}
             onChange={(event) => updateFilters({ ...filters, search: event.target.value })}
-            placeholder="Search chairs, oak, marble..."
+            placeholder={t("searchPlaceholder")}
             className="pl-9"
-            aria-label="Search catalog"
+            aria-label={t("searchCatalog")}
           />
         </div>
       </div>
@@ -84,7 +84,7 @@ export function CatalogPage() {
         />
         <section className="min-w-0 flex-1">
           <div className="mb-5 flex justify-between">
-            <p className="text-sm text-muted-foreground">{productsQuery.data?.length ?? 0} pieces available</p>
+            <p className="text-sm text-muted-foreground">{productsQuery.data?.length ?? 0} {t("artworksAvailable")}</p>
           </div>
           <ProductGrid
             products={productsQuery.data ?? []}

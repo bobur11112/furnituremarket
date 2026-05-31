@@ -7,11 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+  return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(value)} сум`;
 }
 
 export function formatDate(value: string) {
@@ -72,7 +68,7 @@ export function sortProducts(products: Product[], sort: ProductFilters["sort"]) 
 }
 
 export function getInitials(name: string | null | undefined) {
-  if (!name) return "M";
+  if (!name) return "B";
   return name
     .split(" ")
     .map((part) => part[0])

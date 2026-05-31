@@ -103,7 +103,7 @@ export function ProductUploadForm() {
         is_published: true,
       });
       setUploadProgress(100);
-      toast({ title: "Product published", description: `${values.title} is now in the catalog.` });
+      toast({ title: "Картина опубликована", description: `${values.title} добавлена в каталог.` });
       reset(defaultValues);
       setFiles([]);
       window.setTimeout(() => setUploadProgress(0), 800);
@@ -124,30 +124,30 @@ export function ProductUploadForm() {
         <Card>
           <CardContent className="grid gap-5 p-5">
             <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">Название картины</Label>
               <Input id="title" {...register("title")} />
               {errors.title ? <p className="text-sm text-destructive">{errors.title.message}</p> : null}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Описание</Label>
               <Textarea id="description" {...register("description")} />
               {errors.description ? <p className="text-sm text-destructive">{errors.description.message}</p> : null}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="price">Price</Label>
+                <Label htmlFor="price">Цена, сум</Label>
                 <Input id="price" type="number" min="0" step="1" {...register("price", { valueAsNumber: true })} />
                 {errors.price ? <p className="text-sm text-destructive">{errors.price.message}</p> : null}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="stock">Stock</Label>
+                <Label htmlFor="stock">Количество</Label>
                 <Input id="stock" type="number" min="0" step="1" {...register("stock_count", { valueAsNumber: true })} />
                 {errors.stock_count ? <p className="text-sm text-destructive">{errors.stock_count.message}</p> : null}
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Категория</Label>
                 <select
                   id="category"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -162,47 +162,47 @@ export function ProductUploadForm() {
                 {errors.category_id ? <p className="text-sm text-destructive">{errors.category_id.message}</p> : null}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="style">Style</Label>
+                <Label htmlFor="style">Стиль</Label>
                 <select
                   id="style"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   {...register("style")}
                 >
-                  <option value="modern">Modern</option>
-                  <option value="classic">Classic</option>
-                  <option value="scandinavian">Scandinavian</option>
-                  <option value="industrial">Industrial</option>
-                  <option value="minimalist">Minimalist</option>
+                  <option value="modern">Современный</option>
+                  <option value="classic">Классический</option>
+                  <option value="scandinavian">Минимализм</option>
+                  <option value="industrial">Лофт</option>
+                  <option value="minimalist">Лаконичный</option>
                 </select>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="material">Material</Label>
+                <Label htmlFor="material">Материалы и техника</Label>
                 <Input id="material" {...register("material")} />
                 {errors.material ? <p className="text-sm text-destructive">{errors.material.message}</p> : null}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="color">Color</Label>
+                <Label htmlFor="color">Цветовая гамма</Label>
                 <Input id="color" {...register("color")} />
                 {errors.color ? <p className="text-sm text-destructive">{errors.color.message}</p> : null}
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-4">
               <div className="grid gap-2">
-                <Label htmlFor="width">Width</Label>
+                <Label htmlFor="width">Ширина</Label>
                 <Input id="width" type="number" {...register("dimensions.width", { valueAsNumber: true })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="height">Height</Label>
+                <Label htmlFor="height">Высота</Label>
                 <Input id="height" type="number" {...register("dimensions.height", { valueAsNumber: true })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="depth">Depth</Label>
+                <Label htmlFor="depth">Толщина</Label>
                 <Input id="depth" type="number" {...register("dimensions.depth", { valueAsNumber: true })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="unit">Unit</Label>
+                <Label htmlFor="unit">Единица</Label>
                 <select
                   id="unit"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -231,8 +231,8 @@ export function ProductUploadForm() {
               <input {...getInputProps()} aria-label="Upload product images" />
               <div>
                 <UploadCloud className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
-                <p className="mt-3 font-medium">Drop product images</p>
-                <p className="mt-1 text-sm text-muted-foreground">JPG, PNG, or WebP. Up to 6 images.</p>
+                <p className="mt-3 font-medium">Загрузите изображения картины</p>
+                <p className="mt-1 text-sm text-muted-foreground">JPG, PNG или WebP. До 6 изображений.</p>
               </div>
             </div>
             {previews.length > 0 ? (
@@ -264,7 +264,7 @@ export function ProductUploadForm() {
             ) : null}
             <Button type="submit" disabled={isSubmitting || createProductMutation.isPending}>
               {isSubmitting || createProductMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Publish product
+              Опубликовать картину
             </Button>
           </CardContent>
         </Card>

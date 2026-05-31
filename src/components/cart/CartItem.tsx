@@ -6,6 +6,7 @@ import { useCart } from "@/hooks/useCart";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatPrice } from "@/lib/utils";
 import type { CartLine } from "@/stores/cartStore";
+import { useLocale } from "@/contexts/LocaleContext";
 
 type CartItemProps = {
   item: CartLine;
@@ -13,6 +14,7 @@ type CartItemProps = {
 
 export function CartItem({ item }: CartItemProps) {
   const { removeItem, updateQuantity, addItem } = useCart();
+  const { t } = useLocale();
   const [quantity, setQuantity] = useState(item.quantity);
   const debouncedQuantity = useDebounce(quantity, 180);
 
@@ -27,7 +29,7 @@ export function CartItem({ item }: CartItemProps) {
   function handleRemove() {
     removeItem(item.product.id);
     toast({
-      title: "Removed from cart",
+      title: t("removed"),
       description: item.product.title,
       action: (
         <Button
@@ -36,7 +38,7 @@ export function CartItem({ item }: CartItemProps) {
           onClick={() => addItem(item.product, item.quantity)}
           aria-label={`Undo removing ${item.product.title}`}
         >
-          Undo
+          {t("undo")}
         </Button>
       ),
     });

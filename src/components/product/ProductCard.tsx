@@ -7,6 +7,7 @@ import { useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types/product";
 import { ProductBadge } from "./ProductBadge";
+import { getCategoryName, useLocale } from "@/contexts/LocaleContext";
 
 export const cardVariants = {
   initial: { opacity: 0, y: 20 },
@@ -19,6 +20,7 @@ type ProductCardProps = {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const { locale, t } = useLocale();
   const isSoldOut = product.stock_count === 0;
 
   return (
@@ -28,7 +30,7 @@ export function ProductCard({ product }: ProductCardProps) {
       className="group overflow-hidden rounded-lg border border-border bg-card"
     >
       <Link to={`/product/${product.id}`} className="block" aria-label={`View ${product.title}`}>
-        <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+        <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
           <img
             src={product.images[0]}
             alt={product.title}
@@ -47,7 +49,7 @@ export function ProductCard({ product }: ProductCardProps) {
             onClick={(event) => {
               event.preventDefault();
               addItem(product);
-              toast({ title: "Added to cart", description: `${product.title} is ready for checkout.` });
+              toast({ title: t("addedToCart"), description: t("readyForCheckout") });
             }}
           >
             <ShoppingBag className="h-4 w-4" />
@@ -57,7 +59,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="line-clamp-2 font-semibold text-foreground">{product.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{product.category?.name ?? "Furniture"}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{getCategoryName(product.category?.slug, product.category?.name, locale)}</p>
             </div>
             <p className="whitespace-nowrap font-semibold text-primary">{formatPrice(product.price)}</p>
           </div>

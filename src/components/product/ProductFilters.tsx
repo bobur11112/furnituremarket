@@ -6,21 +6,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Slider } from "@/components/ui/slider";
 import { formatPrice } from "@/lib/utils";
 import { catalogMaxPrice, type Category, type FurnitureStyle, type ProductFilters as ProductFiltersType, type ProductSort } from "@/types/product";
+import { getCategoryName, getStyleName, useLocale } from "@/contexts/LocaleContext";
 
-const styles: Array<{ value: FurnitureStyle; label: string }> = [
-  { value: "modern", label: "Modern" },
-  { value: "classic", label: "Classic" },
-  { value: "scandinavian", label: "Scandinavian" },
-  { value: "industrial", label: "Industrial" },
-  { value: "minimalist", label: "Minimalist" },
-];
-
-const sortOptions: Array<{ value: ProductSort; label: string }> = [
-  { value: "newest", label: "Newest" },
-  { value: "popular", label: "Popular" },
-  { value: "price_asc", label: "Price low to high" },
-  { value: "price_desc", label: "Price high to low" },
-];
+const styles: FurnitureStyle[] = ["modern", "classic", "scandinavian", "industrial", "minimalist"];
 
 type ProductFiltersProps = {
   filters: ProductFiltersType;
@@ -35,18 +23,23 @@ function toggleValue<T extends string>(values: T[], value: T) {
 }
 
 function FilterContent({ filters, categories, materials, onChange, onClear }: ProductFiltersProps) {
+  const { locale, t } = useLocale();
+  const sortOptions: Array<{ value: ProductSort; label: string }> = [
+    { value: "newest", label: t("newest") }, { value: "popular", label: t("popular") },
+    { value: "price_asc", label: t("priceAsc") }, { value: "price_desc", label: t("priceDesc") },
+  ];
   return (
     <div className="grid gap-7">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Filters</h2>
+        <h2 className="text-lg font-semibold">{t("filters")}</h2>
         <Button variant="ghost" size="sm" onClick={onClear}>
           <X className="h-4 w-4" />
-          Clear all
+          {t("clearAll")}
         </Button>
       </div>
 
       <div className="grid gap-3">
-        <Label htmlFor="sort">Sort</Label>
+        <Label htmlFor="sort">{t("sort")}</Label>
         <select
           id="sort"
           value={filters.sort}
@@ -63,7 +56,7 @@ function FilterContent({ filters, categories, materials, onChange, onClear }: Pr
 
       <div className="grid gap-4">
         <div className="flex items-center justify-between">
-          <Label>Price range</Label>
+          <Label>{t("priceRange")}</Label>
           <span className="text-xs text-muted-foreground">
             {formatPrice(filters.minPrice)} - {formatPrice(filters.maxPrice)}
           </span>
@@ -82,7 +75,7 @@ function FilterContent({ filters, categories, materials, onChange, onClear }: Pr
       </div>
 
       <fieldset className="grid gap-3">
-        <legend className="text-sm font-medium">Category</legend>
+        <legend className="text-sm font-medium">{t("category")}</legend>
         {categories.map((category) => (
           <div key={category.id} className="flex items-center gap-3">
             <Checkbox
@@ -91,30 +84,30 @@ function FilterContent({ filters, categories, materials, onChange, onClear }: Pr
               onCheckedChange={() => onChange({ ...filters, categories: toggleValue(filters.categories, category.slug) })}
             />
             <Label htmlFor={`category-${category.slug}`} className="text-muted-foreground">
-              {category.name}
+              {getCategoryName(category.slug, category.name, locale)}
             </Label>
           </div>
         ))}
       </fieldset>
 
       <fieldset className="grid gap-3">
-        <legend className="text-sm font-medium">Style</legend>
+        <legend className="text-sm font-medium">{t("style")}</legend>
         {styles.map((style) => (
-          <div key={style.value} className="flex items-center gap-3">
+          <div key={style} className="flex items-center gap-3">
             <Checkbox
-              id={`style-${style.value}`}
-              checked={filters.styles.includes(style.value)}
-              onCheckedChange={() => onChange({ ...filters, styles: toggleValue(filters.styles, style.value) })}
+              id={`style-${style}`}
+              checked={filters.styles.includes(style)}
+              onCheckedChange={() => onChange({ ...filters, styles: toggleValue(filters.styles, style) })}
             />
-            <Label htmlFor={`style-${style.value}`} className="text-muted-foreground">
-              {style.label}
+            <Label htmlFor={`style-${style}`} className="text-muted-foreground">
+              {getStyleName(style, locale)}
             </Label>
           </div>
         ))}
       </fieldset>
 
       <fieldset className="grid gap-3">
-        <legend className="text-sm font-medium">Material</legend>
+        <legend className="text-sm font-medium">{t("technique")}</legend>
         {materials.map((material) => (
           <div key={material} className="flex items-center gap-3">
             <Checkbox
@@ -133,6 +126,7 @@ function FilterContent({ filters, categories, materials, onChange, onClear }: Pr
 }
 
 export function ProductFilters(props: ProductFiltersProps) {
+  const { t } = useLocale();
   return (
     <>
       <aside className="hidden w-64 shrink-0 lg:block">
@@ -146,13 +140,13 @@ export function ProductFilters(props: ProductFiltersProps) {
           <SheetTrigger asChild>
             <Button variant="outline">
               <Filter className="h-4 w-4" />
-              Filters
+              {t("filters")}
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="overflow-y-auto">
             <SheetHeader>
-              <SheetTitle>Refine catalog</SheetTitle>
-              <SheetDescription>Filter by category, material, style, and price.</SheetDescription>
+              <SheetTitle>{t("refineCatalog")}</SheetTitle>
+              <SheetDescription>{t("refineDescription")}</SheetDescription>
             </SheetHeader>
             <div className="mt-6">
               <FilterContent {...props} />

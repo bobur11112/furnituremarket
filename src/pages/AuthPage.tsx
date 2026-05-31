@@ -30,7 +30,7 @@ export function AuthPage() {
           <CardContent className="p-6 sm:p-10">
             <div className="mb-8">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Account</p>
-              <h1 className="mt-2 font-display text-4xl font-bold">Welcome to Möbel</h1>
+              <h1 className="mt-2 font-display text-4xl font-bold">BIGART Admin</h1>
               <p className="mt-3 text-muted-foreground">Sign in to manage products and customer orders.</p>
             </div>
             <LoginForm />

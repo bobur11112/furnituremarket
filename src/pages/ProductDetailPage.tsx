@@ -13,6 +13,7 @@ import { useCart } from "@/hooks/useCart";
 import { useProduct, useRelatedProducts } from "@/hooks/useProducts";
 import { formatPrice, getInitials } from "@/lib/utils";
 import { getSupabaseErrorMessage } from "@/lib/supabase";
+import { getCategoryName, getStyleName, useLocale } from "@/contexts/LocaleContext";
 
 export function ProductDetailPage() {
   const { id } = useParams();
@@ -20,6 +21,7 @@ export function ProductDetailPage() {
   const product = productQuery.data;
   const relatedQuery = useRelatedProducts(product);
   const { addItem } = useCart();
+  const { locale, t } = useLocale();
 
   if (productQuery.isLoading) {
     return (
@@ -33,10 +35,10 @@ export function ProductDetailPage() {
     return (
       <PageWrapper className="container grid min-h-[70vh] place-items-center py-10 text-center">
         <div>
-          <h1 className="text-3xl font-semibold">{productQuery.isError ? "Catalog is unavailable" : "Product not found"}</h1>
+          <h1 className="text-3xl font-semibold">{productQuery.isError ? t("catalogUnavailable") : t("productNotFound")}</h1>
           {productQuery.error ? <p className="mt-2 text-sm text-destructive">{getSupabaseErrorMessage(productQuery.error)}</p> : null}
           <Button className="mt-5" asChild>
-            <Link to="/catalog">Back to catalog</Link>
+            <Link to="/catalog">{t("backToCatalog")}</Link>
           </Button>
         </div>
       </PageWrapper>
@@ -45,14 +47,14 @@ export function ProductDetailPage() {
 
   const dimensions = product.dimensions
     ? `${product.dimensions.width} x ${product.dimensions.height} x ${product.dimensions.depth} ${product.dimensions.unit}`
-    : "Made to measure";
+    : t("madeToMeasure");
 
   return (
     <PageWrapper className="container py-10">
       <Button variant="ghost" asChild className="mb-6">
         <Link to="/catalog">
           <ArrowLeft className="h-4 w-4" />
-          Back to catalog
+          {t("backToCatalog")}
         </Link>
       </Button>
 
@@ -61,8 +63,8 @@ export function ProductDetailPage() {
         <section className="grid content-start gap-6">
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
-              <Badge>{product.category?.name ?? "Furniture"}</Badge>
-              {product.style ? <Badge variant="outline">{product.style}</Badge> : null}
+              <Badge>{getCategoryName(product.category?.slug, product.category?.name, locale)}</Badge>
+              {product.style ? <Badge variant="outline">{getStyleName(product.style, locale)}</Badge> : null}
             </div>
             <h1 className="font-display text-4xl font-bold leading-tight md:text-5xl">{product.title}</h1>
             <p className="mt-4 text-3xl font-semibold text-primary">{formatPrice(product.price)}</p>
@@ -74,7 +76,7 @@ export function ProductDetailPage() {
               <CardContent className="flex items-center gap-3 p-4">
                 <Ruler className="h-5 w-5 text-primary" aria-hidden="true" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Dimensions</p>
+                  <p className="text-sm text-muted-foreground">{t("dimensions")}</p>
                   <p className="font-medium">{dimensions}</p>
                 </div>
               </CardContent>
@@ -83,8 +85,8 @@ export function ProductDetailPage() {
               <CardContent className="flex items-center gap-3 p-4">
                 <PackageCheck className="h-5 w-5 text-primary" aria-hidden="true" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Stock</p>
-                  <p className="font-medium">{product.stock_count > 0 ? `${product.stock_count} available` : "Sold out"}</p>
+                  <p className="text-sm text-muted-foreground">{t("stock")}</p>
+                  <p className="font-medium">{product.stock_count > 0 ? `${product.stock_count} ${t("available")}` : t("soldOut")}</p>
                 </div>
               </CardContent>
             </Card>
@@ -92,12 +94,12 @@ export function ProductDetailPage() {
 
           <dl className="grid gap-3 rounded-lg border border-border bg-card p-5 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Material</dt>
-              <dd className="font-medium">{product.material ?? "Mixed"}</dd>
+              <dt className="text-muted-foreground">{t("material")}</dt>
+              <dd className="font-medium">{product.material ?? t("mixed")}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Color</dt>
-              <dd className="font-medium">{product.color ?? "Natural"}</dd>
+              <dt className="text-muted-foreground">{t("color")}</dt>
+              <dd className="font-medium">{product.color ?? t("natural")}</dd>
             </div>
           </dl>
 
@@ -108,11 +110,11 @@ export function ProductDetailPage() {
               className="w-full"
               onClick={() => {
                 addItem(product);
-                toast({ title: "Added to cart", description: `${product.title} is ready for checkout.` });
+                toast({ title: t("addedToCart"), description: t("readyForCheckout") });
               }}
             >
               <ShoppingBag className="h-5 w-5" />
-              Add to cart
+              {t("addToCart")}
             </Button>
           </motion.div>
 
@@ -124,9 +126,9 @@ export function ProductDetailPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <Store className="h-4 w-4 text-primary" aria-hidden="true" />
-                  <p className="font-semibold">{product.seller?.full_name ?? "Verified seller"}</p>
+                  <p className="font-semibold">{t("artist")}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Responds within 1 business day</p>
+                <p className="text-sm text-muted-foreground">{t("responds")}</p>
               </div>
             </CardContent>
           </Card>
@@ -134,7 +136,7 @@ export function ProductDetailPage() {
       </div>
 
       <section className="mt-16">
-        <h2 className="mb-6 font-display text-3xl font-bold">Related pieces</h2>
+        <h2 className="mb-6 font-display text-3xl font-bold">{t("related")}</h2>
         <ProductGrid products={relatedQuery.data ?? []} isLoading={relatedQuery.isLoading} />
       </section>
     </PageWrapper>

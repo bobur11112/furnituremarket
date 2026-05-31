@@ -5,21 +5,23 @@ import { PageWrapper } from "@/components/layout/PageWrapper";
 import { CartItem } from "@/components/cart/CartItem";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { useCart } from "@/hooks/useCart";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export function CartPage() {
   const { items, subtotal } = useCart();
+  const { t } = useLocale();
 
   return (
     <PageWrapper className="container py-10">
-      <h1 className="font-display text-4xl font-bold md:text-5xl">Cart</h1>
+      <h1 className="font-display text-4xl font-bold md:text-5xl">{t("cart")}</h1>
       {items.length === 0 ? (
         <div className="grid min-h-96 place-items-center text-center">
           <div>
             <ShoppingBag className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
-            <h2 className="mt-4 text-2xl font-semibold">No items yet</h2>
-            <p className="mt-2 text-muted-foreground">The catalog is ready when you are.</p>
+            <h2 className="mt-4 text-2xl font-semibold">{t("cartEmptyTitle")}</h2>
+            <p className="mt-2 text-muted-foreground">{t("cartEmptyBody")}</p>
             <Button className="mt-5" asChild>
-              <Link to="/catalog">Browse catalog</Link>
+              <Link to="/catalog">{t("browseCatalog")}</Link>
             </Button>
           </div>
         </div>

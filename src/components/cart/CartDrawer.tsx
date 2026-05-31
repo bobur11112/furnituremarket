@@ -5,26 +5,28 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useCart } from "@/hooks/useCart";
 import { CartItem } from "./CartItem";
 import { CartSummary } from "./CartSummary";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export function CartDrawer() {
   const { items, isOpen, closeCart, subtotal } = useCart();
+  const { t } = useLocale();
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => (open ? undefined : closeCart())}>
       <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Your cart</SheetTitle>
-          <SheetDescription>{items.length} curated piece{items.length === 1 ? "" : "s"} selected.</SheetDescription>
+          <SheetTitle>{t("cart")}</SheetTitle>
+          <SheetDescription>{items.length} {t("selected")}</SheetDescription>
         </SheetHeader>
 
         {items.length === 0 ? (
           <div className="grid flex-1 place-items-center text-center">
             <div>
               <ShoppingBag className="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
-              <h3 className="mt-4 text-xl font-semibold">Your cart is quiet</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Add a chair, a lamp, or a whole room.</p>
+              <h3 className="mt-4 text-xl font-semibold">{t("cartEmptyTitle")}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{t("cartEmptyBody")}</p>
               <Button className="mt-5" asChild onClick={closeCart}>
-                <Link to="/catalog">Browse catalog</Link>
+                <Link to="/catalog">{t("browseCatalog")}</Link>
               </Button>
             </div>
           </div>

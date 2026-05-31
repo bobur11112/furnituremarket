@@ -19,7 +19,7 @@ describe("ProductCard", () => {
     );
 
     expect(screen.getByText(products[0].title)).toBeInTheDocument();
-    expect(screen.getByText("$1,480")).toBeInTheDocument();
+    expect(screen.getByText(/1\s480 сум/)).toBeInTheDocument();
   });
 
   it("adds the product to cart", async () => {

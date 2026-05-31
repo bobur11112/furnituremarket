@@ -67,7 +67,7 @@ export const useCartStore = create<CartState>()(
       totalQuantity: () => get().items.reduce((sum, item) => sum + item.quantity, 0),
     }),
     {
-      name: "mobel-cart",
+      name: "bigart-cart",
       partialize: (state) => ({ items: state.items }),
     },
   ),
