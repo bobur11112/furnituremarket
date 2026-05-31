@@ -28,7 +28,7 @@ export function Header() {
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <motion.header initial={{ y: -18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={cn("sticky top-0 z-40 border-b border-white/10 bg-[#0e0d0b]/92 backdrop-blur-xl transition-shadow", scrolled && "shadow-card")}>
+    <motion.header initial={{ y: -18, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className={cn("sticky top-0 z-40 border-b border-white/10 bg-[#0e0d0b]/92 backdrop-blur-xl transition-shadow print:hidden", scrolled && "shadow-card")}>
       <div className="container flex h-[4.5rem] items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import JsBarcode from "jsbarcode";
 import { ArrowLeft, Clipboard, PackageCheck, Printer, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -99,13 +100,14 @@ export function OrderDetailPage() {
 
   return (
     <PageWrapper className="container py-8 sm:py-10">
-      <Button variant="ghost" asChild className="mb-5"><Link to="/admin"><ArrowLeft className="h-4 w-4" />{text.back}</Link></Button>
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+      <OrderReceipt order={order} text={text} />
+      <Button variant="ghost" asChild className="mb-5 print:hidden"><Link to="/admin"><ArrowLeft className="h-4 w-4" />{text.back}</Link></Button>
+      <div className="flex flex-col justify-between gap-4 print:hidden md:flex-row md:items-end">
         <div><p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">{text.eyebrow}</p><h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">{text.title} <span className="text-primary">{order.order_code}</span></h1></div>
         <div className="flex flex-wrap gap-2 print:hidden"><Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4" />{text.print}</Button><Button variant="destructive" onClick={() => void handleDelete()} disabled={deleteOrder.isPending}><Trash2 className="h-4 w-4" />{text.delete}</Button></div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <div className="mt-8 grid gap-6 print:hidden lg:grid-cols-[1fr_20rem]">
         <div className="grid gap-6">
           <Card><CardContent className="grid gap-6 p-5 sm:grid-cols-2 lg:grid-cols-3"><Info label={text.code} value={order.order_code} /><Info label={text.status} value={text[order.status]} /><Info label={text.created} value={formatDate(order.created_at)} /><Info label={text.name} value={order.shipping_address.fullName} /><Info label={text.phone} value={order.shipping_address.phone} /><Info label={text.email} value={order.shipping_address.email || text.noEmail} /></CardContent></Card>
           <Card><CardContent className="p-0"><div className="border-b border-border p-5"><h2 className="text-xl font-semibold">{text.items}</h2></div>{order.order_items?.map((item) => <div key={item.id} className="grid gap-4 border-b border-border p-4 last:border-b-0 sm:grid-cols-[4.5rem_1fr_auto] sm:items-center">{item.product?.images[0] ? <img src={item.product.images[0]} alt={item.product_title ?? ""} className="h-16 w-16 rounded-md object-cover" /> : <div className="grid h-16 w-16 place-items-center rounded-md bg-secondary"><PackageCheck className="h-5 w-5 text-primary" /></div>}<div><p className="font-semibold">{item.product_title ?? item.product?.title}</p><p className="mt-1 text-xs text-muted-foreground">{text.sku}: {getSku(item)}</p><p className="mt-2 text-sm text-muted-foreground">{text.quantity}: {item.quantity} · {text.unitPrice}: {formatPrice(item.price_at_purchase)}</p></div><p className="font-semibold text-primary">{formatPrice(item.price_at_purchase * item.quantity)}</p></div>)}{!order.order_items?.length ? <p className="p-5 text-sm text-muted-foreground">{text.noItems}</p> : null}</CardContent></Card>
@@ -119,6 +121,60 @@ export function OrderDetailPage() {
         </aside>
       </div>
     </PageWrapper>
+  );
+}
+
+function OrderReceipt({ order, text }: { order: Order; text: (typeof copy)["ru"] | (typeof copy)["uz"] }) {
+  const barcodeRef = useRef<SVGSVGElement>(null);
+  const address = [order.shipping_address.address, order.shipping_address.city].filter(Boolean).join(", ");
+
+  useEffect(() => {
+    if (!barcodeRef.current) return;
+    JsBarcode(barcodeRef.current, order.order_code, {
+      format: "CODE128",
+      displayValue: true,
+      height: 54,
+      margin: 0,
+      fontSize: 15,
+      lineColor: "#000000",
+      background: "#ffffff",
+    });
+  }, [order.order_code]);
+
+  return (
+    <section className="hidden bg-white p-6 text-black print:block">
+      <div className="mx-auto max-w-[76mm]">
+        <div className="text-center">
+          <p className="text-2xl font-bold">BIGART</p>
+          <p className="mt-1 text-xs">Авторские картины · Ташкент</p>
+        </div>
+        <Separator className="my-4 bg-black/25" />
+        <div className="grid gap-1 text-xs">
+          <p><strong>{text.code}:</strong> {order.order_code}</p>
+          <p><strong>{text.created}:</strong> {formatDate(order.created_at)}</p>
+          <p><strong>{text.status}:</strong> {text[order.status]}</p>
+          <p><strong>{text.name}:</strong> {order.shipping_address.fullName}</p>
+          <p><strong>{text.phone}:</strong> {order.shipping_address.phone}</p>
+          <p><strong>{text.address}:</strong> {address}</p>
+        </div>
+        <Separator className="my-4 bg-black/25" />
+        <div className="grid gap-3">
+          {order.order_items?.map((item) => (
+            <div key={item.id} className="text-xs">
+              <p className="font-semibold">{item.product_title ?? item.product?.title}</p>
+              <div className="mt-1 flex justify-between gap-3">
+                <span>{item.quantity} × {formatPrice(item.price_at_purchase)}</span>
+                <span className="font-semibold">{formatPrice(item.price_at_purchase * item.quantity)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <Separator className="my-4 bg-black/25" />
+        <div className="flex justify-between gap-3 text-sm font-bold"><span>{text.total}</span><span>{formatPrice(order.total_price)}</span></div>
+        <div className="mt-5 flex justify-center overflow-hidden"><svg ref={barcodeRef} aria-label={`Barcode ${order.order_code}`} /></div>
+        <p className="mt-4 text-center text-xs">Спасибо за заказ!</p>
+      </div>
+    </section>
   );
 }
 

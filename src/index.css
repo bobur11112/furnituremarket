@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@media print {
+  body {
+    background: #ffffff;
+  }
+}
+
 @layer base {
   :root {
     --bg-primary: #0e0d0b;

@@ -5,7 +5,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 export function Footer() {
   const { t } = useLocale();
   return (
-    <footer id="contacts" className="scroll-mt-24 border-t border-border bg-background">
+    <footer id="contacts" className="scroll-mt-24 border-t border-border bg-background print:hidden">
       <div className="container grid gap-8 py-10 md:grid-cols-[1.3fr_1fr_1fr]">
         <div>
           <Link to="/" className="text-2xl font-bold tracking-[0.2em]">BIGART</Link>
