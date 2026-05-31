@@ -4,20 +4,20 @@
 
 @layer base {
   :root {
-    --bg-primary: #0f0e0d;
-    --bg-card: #1a1917;
-    --bg-elevated: #242220;
-    --accent-raw: #bd9b63;
-    --accent-hover: #d4b477;
-    --text-primary: #f5f0e8;
-    --text-secondary: #a09880;
-    --text-muted: #6b6355;
-    --border-raw: #2e2b26;
-    --border-subtle: #201e1b;
+    --bg-primary: #0e0d0b;
+    --bg-card: #15120f;
+    --bg-elevated: #1d1915;
+    --accent-raw: #c9a45c;
+    --accent-hover: #d8b66f;
+    --text-primary: #f5f1e8;
+    --text-secondary: #b8aea0;
+    --text-muted: #7d746a;
+    --border-raw: rgba(255, 255, 255, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.06);
 
-    --background: 30 7% 5%;
+    --background: 40 12% 5%;
     --foreground: 37 39% 94%;
-    --card: 30 6% 10%;
+    --card: 30 17% 7%;
     --card-foreground: 37 39% 94%;
     --popover: 30 6% 10%;
     --popover-foreground: 37 39% 94%;
@@ -26,7 +26,7 @@
     --secondary: 30 8% 14%;
     --secondary-foreground: 37 39% 94%;
     --muted: 30 8% 14%;
-    --muted-foreground: 37 14% 56%;
+    --muted-foreground: 32 12% 67%;
     --accent: 39 46% 61%;
     --accent-foreground: 30 7% 5%;
     --destructive: 0 70% 50%;
@@ -48,7 +48,7 @@
 
   body {
     @apply min-h-screen bg-background font-sans text-foreground antialiased;
-    background: #0f0e0d;
+    background: #0e0d0b;
   }
 
   ::selection {

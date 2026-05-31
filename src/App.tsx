@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from "@/components/ui/toast";
@@ -7,6 +8,11 @@ import { Header } from "@/components/layout/Header";
 
 export function App() {
   const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) return;
+    window.requestAnimationFrame(() => document.querySelector(location.hash)?.scrollIntoView({ behavior: "smooth" }));
+  }, [location.hash, location.pathname]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

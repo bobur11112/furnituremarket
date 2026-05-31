@@ -3,19 +3,21 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { SellerDashboard } from "@/components/seller/SellerDashboard";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export function SellerDashboardPage() {
+  const { locale } = useLocale();
   return (
     <PageWrapper className="container py-10">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Seller studio</p>
-          <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">Dashboard</h1>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">BIGART Admin</p>
+          <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">{locale === "ru" ? "Управление картинами" : "Rasmlarni boshqarish"}</h1>
         </div>
         <Button asChild>
           <Link to="/seller/add-product">
             <Plus className="h-4 w-4" />
-            Add product
+            {locale === "ru" ? "Добавить картину" : "Rasm qo'shish"}
           </Link>
         </Button>
       </div>

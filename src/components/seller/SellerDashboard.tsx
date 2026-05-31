@@ -24,6 +24,7 @@ import {
 import { formatPrice } from "@/lib/utils";
 import { productSchema } from "@/schemas/product.schema";
 import type { FurnitureStyle, Product, ProductDimensions } from "@/types/product";
+import { getCategoryName, useLocale } from "@/contexts/LocaleContext";
 
 type EditDraft = {
   title: string;
@@ -71,6 +72,12 @@ function productToDraft(product: Product): EditDraft {
 
 export function SellerDashboard() {
   const { user } = useAuth();
+  const { locale } = useLocale();
+  const text = locale === "ru" ? {
+    products: "Всего картин", orders: "Всего заказов", revenue: "Выручка", loadFailed: "Не удалось загрузить картины", empty: "Картин пока нет", emptyBody: "Добавьте первую картину в каталог.", product: "Картина", price: "Цена", stock: "Количество", status: "Статус", actions: "Действия", published: "Опубликовано", draft: "Черновик", edit: "Редактировать картину", editBody: "Измените информацию, публикацию, количество и изображения.", title: "Название", description: "Описание", category: "Категория", style: "Стиль", material: "Материалы и техника", color: "Цветовая гамма", width: "Ширина", height: "Высота", depth: "Толщина", publishedCatalog: "Опубликовано в каталоге", images: "Изображения", addImages: "Добавить JPG, PNG или WebP", save: "Сохранить изменения", updated: "Картина обновлена", deleted: "Картина удалена", hidden: "Картина скрыта", imagesRequired: "Добавьте изображение", tooMany: "Слишком много изображений", check: "Проверьте данные картины",
+  } : {
+    products: "Jami rasmlar", orders: "Jami buyurtmalar", revenue: "Tushum", loadFailed: "Rasmlarni yuklab bo'lmadi", empty: "Hozircha rasmlar yo'q", emptyBody: "Katalogga birinchi rasmni qo'shing.", product: "Rasm", price: "Narx", stock: "Soni", status: "Holat", actions: "Amallar", published: "Nashr qilingan", draft: "Qoralama", edit: "Rasmni tahrirlash", editBody: "Ma'lumot, nashr, soni va rasmlarni o'zgartiring.", title: "Nomi", description: "Tavsif", category: "Toifa", style: "Uslub", material: "Material va texnika", color: "Ranglar", width: "Kenglik", height: "Balandlik", depth: "Qalinlik", publishedCatalog: "Katalogda nashr qilingan", images: "Rasmlar", addImages: "JPG, PNG yoki WebP qo'shish", save: "O'zgarishlarni saqlash", updated: "Rasm yangilandi", deleted: "Rasm o'chirildi", hidden: "Rasm yashirildi", imagesRequired: "Rasm qo'shing", tooMany: "Rasmlar juda ko'p", check: "Rasm ma'lumotlarini tekshiring",
+  };
   const productsQuery = useSellerProducts(user?.id);
   const statsQuery = useSellerStats(user?.id);
   const categoriesQuery = useCategories();
@@ -110,16 +117,16 @@ export function SellerDashboard() {
   async function saveEdit() {
     if (!editingProduct || !draft) return;
     if (draft.images.length + newFiles.length === 0) {
-      toast({ title: "Images required", description: "Keep or upload at least one product image.", variant: "destructive" });
+      toast({ title: text.imagesRequired, description: text.addImages, variant: "destructive" });
       return;
     }
     if (draft.images.length + newFiles.length > 6) {
-      toast({ title: "Too many images", description: "Keep up to 6 images per product.", variant: "destructive" });
+      toast({ title: text.tooMany, description: "Max: 6", variant: "destructive" });
       return;
     }
     const validation = productSchema.safeParse(draft);
     if (!validation.success) {
-      toast({ title: "Check product details", description: validation.error.issues[0]?.message ?? "Some fields are invalid.", variant: "destructive" });
+      toast({ title: text.check, description: validation.error.issues[0]?.message ?? text.check, variant: "destructive" });
       return;
     }
 
@@ -132,9 +139,9 @@ export function SellerDashboard() {
       productSaved = true;
       const removedUrls = editingProduct.images.filter((imageUrl) => !images.includes(imageUrl));
       await deleteUploadedProductImages(removedUrls).catch(() => {
-        toast({ title: "Product updated", description: "Some old image files could not be removed from storage." });
+        toast({ title: text.updated, description: draft.title });
       });
-      toast({ title: "Product updated", description: draft.title });
+      toast({ title: text.updated, description: draft.title });
       closeEditor();
     } catch (error) {
       if (!productSaved && uploadedUrls.length > 0) await deleteUploadedProductImages(uploadedUrls).catch(() => undefined);
@@ -149,7 +156,7 @@ export function SellerDashboard() {
   async function handleDelete(product: Product) {
     try {
       await deleteMutation.mutateAsync(product);
-      toast({ title: "Product deleted", description: product.title });
+      toast({ title: text.deleted, description: product.title });
     } catch (error) {
       toast({
         title: "Product deletion failed",
@@ -162,7 +169,7 @@ export function SellerDashboard() {
   async function handleToggle(product: Product) {
     try {
       await toggleMutation.mutateAsync(product);
-      toast({ title: product.is_published ? "Product hidden" : "Product published", description: product.title });
+      toast({ title: product.is_published ? text.hidden : text.published, description: product.title });
     } catch (error) {
       toast({
         title: "Status update failed",
@@ -177,16 +184,16 @@ export function SellerDashboard() {
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard icon={Package} label="Total products" value={stats ? String(stats.totalProducts) : "..."} />
-        <StatCard icon={BarChart3} label="Total orders" value={stats ? String(stats.totalOrders) : "..."} />
-        <StatCard icon={DollarSign} label="Total revenue" value={stats ? formatPrice(stats.totalRevenue) : "..."} />
+        <StatCard icon={Package} label={text.products} value={stats ? String(stats.totalProducts) : "..."} />
+        <StatCard icon={BarChart3} label={text.orders} value={stats ? String(stats.totalOrders) : "..."} />
+        <StatCard icon={DollarSign} label={text.revenue} value={stats ? formatPrice(stats.totalRevenue) : "..."} />
       </div>
 
       <Card>
         <CardContent className="p-0">
           {queryError ? (
             <div className="p-6">
-              <h2 className="text-xl font-semibold">Could not load products</h2>
+              <h2 className="text-xl font-semibold">{text.loadFailed}</h2>
               <p className="mt-2 text-sm text-destructive">
                 {queryError instanceof Error ? queryError.message : "Check Supabase configuration and database policies."}
               </p>
@@ -200,18 +207,14 @@ export function SellerDashboard() {
           ) : products.length === 0 ? (
             <div className="p-8 text-center">
               <Package className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
-              <h2 className="mt-4 text-xl font-semibold">No products yet</h2>
-              <p className="mt-2 text-sm text-muted-foreground">Add your first listing to begin selling.</p>
+              <h2 className="mt-4 text-xl font-semibold">{text.empty}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{text.emptyBody}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{text.product}</TableHead><TableHead>{text.price}</TableHead><TableHead>{text.stock}</TableHead><TableHead>{text.status}</TableHead><TableHead className="text-right">{text.actions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -222,7 +225,7 @@ export function SellerDashboard() {
                         <img src={product.images[0]} alt={product.title} className="h-12 w-12 rounded-md object-cover" />
                         <div>
                           <p className="font-medium">{product.title}</p>
-                          <p className="text-xs text-muted-foreground">{product.category?.name ?? product.style}</p>
+                          <p className="text-xs text-muted-foreground">{getCategoryName(product.category?.slug, product.category?.name, locale)}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -230,7 +233,7 @@ export function SellerDashboard() {
                     <TableCell>{product.stock_count}</TableCell>
                     <TableCell>
                       <Badge variant={product.is_published ? "default" : "muted"}>
-                        {product.is_published ? "Published" : "Draft"}
+                        {product.is_published ? text.published : text.draft}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -269,71 +272,71 @@ export function SellerDashboard() {
       <Sheet open={Boolean(editingProduct && draft)} onOpenChange={(open) => (!open ? closeEditor() : undefined)}>
         <SheetContent className="overflow-y-auto sm:max-w-xl">
           <SheetHeader>
-            <SheetTitle>Edit product</SheetTitle>
-            <SheetDescription>Update catalog details, visibility, inventory, and images.</SheetDescription>
+            <SheetTitle>{text.edit}</SheetTitle>
+            <SheetDescription>{text.editBody}</SheetDescription>
           </SheetHeader>
           {draft ? (
             <div className="mt-6 grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-title">Title</Label>
+                <Label htmlFor="edit-title">{text.title}</Label>
                 <Input id="edit-title" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-description">Description</Label>
+                <Label htmlFor="edit-description">{text.description}</Label>
                 <Textarea id="edit-description" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-price">Price</Label>
+                  <Label htmlFor="edit-price">{text.price}</Label>
                   <Input id="edit-price" type="number" min="1" value={draft.price} onChange={(event) => setDraft({ ...draft, price: Number(event.target.value) })} />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-stock">Stock</Label>
+                  <Label htmlFor="edit-stock">{text.stock}</Label>
                   <Input id="edit-stock" type="number" min="0" value={draft.stock_count} onChange={(event) => setDraft({ ...draft, stock_count: Number(event.target.value) })} />
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-category">Category</Label>
+                  <Label htmlFor="edit-category">{text.category}</Label>
                   <select id="edit-category" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={draft.category_id} onChange={(event) => setDraft({ ...draft, category_id: event.target.value })}>
-                    {categoriesQuery.data?.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                    {categoriesQuery.data?.map((category) => <option key={category.id} value={category.id}>{getCategoryName(category.slug, category.name, locale)}</option>)}
                   </select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-style">Style</Label>
+                  <Label htmlFor="edit-style">{text.style}</Label>
                   <select id="edit-style" className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={draft.style} onChange={(event) => setDraft({ ...draft, style: event.target.value as FurnitureStyle })}>
-                    <option value="modern">Modern</option>
-                    <option value="classic">Classic</option>
-                    <option value="scandinavian">Scandinavian</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="minimalist">Minimalist</option>
+                    <option value="modern">{locale === "ru" ? "Современный" : "Zamonaviy"}</option>
+                    <option value="classic">{locale === "ru" ? "Классический" : "Klassik"}</option>
+                    <option value="scandinavian">{locale === "ru" ? "Минимализм" : "Minimalizm"}</option>
+                    <option value="industrial">{locale === "ru" ? "Лофт" : "Loft"}</option>
+                    <option value="minimalist">{locale === "ru" ? "Лаконичный" : "Minimalistik"}</option>
                   </select>
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-material">Material</Label>
+                  <Label htmlFor="edit-material">{text.material}</Label>
                   <Input id="edit-material" value={draft.material} onChange={(event) => setDraft({ ...draft, material: event.target.value })} />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-color">Color</Label>
+                  <Label htmlFor="edit-color">{text.color}</Label>
                   <Input id="edit-color" value={draft.color} onChange={(event) => setDraft({ ...draft, color: event.target.value })} />
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 {(["width", "height", "depth"] as const).map((dimension) => (
                   <div className="grid gap-2" key={dimension}>
-                    <Label htmlFor={`edit-${dimension}`}>{dimension}</Label>
+                    <Label htmlFor={`edit-${dimension}`}>{text[dimension]}</Label>
                     <Input id={`edit-${dimension}`} type="number" min="1" value={draft.dimensions[dimension]} onChange={(event) => setDraft({ ...draft, dimensions: { ...draft.dimensions, [dimension]: Number(event.target.value) } })} />
                   </div>
                 ))}
               </div>
               <label className="flex items-center gap-3 rounded-md border border-border p-3 text-sm font-medium">
                 <input type="checkbox" checked={draft.is_published} onChange={(event) => setDraft({ ...draft, is_published: event.target.checked })} />
-                Published in catalog
+                {text.publishedCatalog}
               </label>
               <div className="grid gap-3">
-                <Label>Images</Label>
+                <Label>{text.images}</Label>
                 <div className="grid grid-cols-3 gap-3">
                   {draft.images.map((imageUrl) => (
                     <div className="relative aspect-square overflow-hidden rounded-md border border-border" key={imageUrl}>
@@ -354,12 +357,12 @@ export function SellerDashboard() {
                 </div>
                 <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">
                   <ImagePlus className="h-4 w-4 text-primary" />
-                  Add JPG, PNG, or WebP images
+                  {text.addImages}
                   <input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => setNewFiles((files) => [...files, ...Array.from(event.target.files ?? [])].slice(0, 6))} />
                 </label>
               </div>
               <Button disabled={updateMutation.isPending} onClick={() => void saveEdit()}>
-                Save changes
+                {text.save}
               </Button>
             </div>
           ) : null}

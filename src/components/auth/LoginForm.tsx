@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { loginSchema, type LoginValues } from "@/schemas/auth.schema";
+import { useLocale } from "@/contexts/LocaleContext";
 
 type LocationState = {
   from?: string;
@@ -15,6 +16,7 @@ type LocationState = {
 
 export function LoginForm() {
   const { signIn } = useAuth();
+  const { locale } = useLocale();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as LocationState | null)?.from ?? "/admin";
@@ -31,15 +33,15 @@ export function LoginForm() {
   async function onSubmit(values: LoginValues) {
     try {
       await signIn(values.email, values.password);
-      toast({ title: "Welcome back", description: "Your marketplace session is ready." });
+      toast({ title: locale === "ru" ? "Добро пожаловать" : "Xush kelibsiz", description: locale === "ru" ? "Вход выполнен." : "Tizimga kirildi." });
       navigate(from, { replace: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       toast({
-        title: "Sign in failed",
+        title: locale === "ru" ? "Не удалось войти" : "Tizimga kirib bo'lmadi",
         description: message.toLowerCase().includes("invalid login credentials")
-          ? "Supabase rejected this email and password. Create the administrator in Supabase Authentication or reset its password."
-          : message || "Check your credentials and try again.",
+          ? (locale === "ru" ? "Неверный email или пароль. Проверьте данные пользователя в Supabase Authentication." : "Email yoki parol noto'g'ri. Supabase Authentication ma'lumotlarini tekshiring.")
+          : message || (locale === "ru" ? "Проверьте данные и попробуйте снова." : "Ma'lumotlarni tekshirib, qayta urinib ko'ring."),
         variant: "destructive",
       });
     }
@@ -53,13 +55,13 @@ export function LoginForm() {
         {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="login-password">Password</Label>
+        <Label htmlFor="login-password">{locale === "ru" ? "Пароль" : "Parol"}</Label>
         <Input id="login-password" type="password" autoComplete="current-password" {...register("password")} />
         {errors.password ? <p className="text-sm text-destructive">{errors.password.message}</p> : null}
       </div>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-        Sign in
+        {locale === "ru" ? "Войти" : "Kirish"}
       </Button>
     </form>
   );

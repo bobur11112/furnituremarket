@@ -5,7 +5,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 export function Footer() {
   const { t } = useLocale();
   return (
-    <footer className="border-t border-border bg-background">
+    <footer id="contacts" className="scroll-mt-24 border-t border-border bg-background">
       <div className="container grid gap-8 py-10 md:grid-cols-[1.3fr_1fr_1fr]">
         <div>
           <Link to="/" className="text-2xl font-bold tracking-[0.2em]">BIGART</Link>
@@ -14,6 +14,8 @@ export function Footer() {
         <div className="grid gap-2 text-sm">
           <p className="font-semibold text-foreground">{t("footerNav")}</p>
           <Link className="text-muted-foreground hover:text-primary" to="/catalog">{t("catalog")}</Link>
+          <a className="text-muted-foreground hover:text-primary" href="/#about">{t("about")}</a>
+          <a className="text-muted-foreground hover:text-primary" href="/#delivery">{t("deliveryNav")}</a>
         </div>
         <div className="grid content-start gap-2 text-sm">
           <p className="font-semibold text-foreground">{t("footerContact")}</p>

@@ -3,9 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export function AuthPage() {
   const { user, profile } = useAuth();
+  const { locale } = useLocale();
 
   if (user) {
     return <Navigate to="/admin" replace />;
@@ -22,16 +24,16 @@ export function AuthPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-8 left-8 max-w-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Members</p>
-            <h1 className="mt-2 font-display text-4xl font-bold">Buy better. Sell beautifully.</h1>
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">BIGART</p>
+            <h1 className="mt-2 font-display text-4xl font-bold">{locale === "ru" ? "Управляйте коллекцией удобно." : "To'plamni qulay boshqaring."}</h1>
           </div>
         </div>
         <Card className="rounded-none border-0 bg-transparent shadow-none">
           <CardContent className="p-6 sm:p-10">
             <div className="mb-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Account</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">{locale === "ru" ? "Аккаунт" : "Akkaunt"}</p>
               <h1 className="mt-2 font-display text-4xl font-bold">BIGART Admin</h1>
-              <p className="mt-3 text-muted-foreground">Sign in to manage products and customer orders.</p>
+              <p className="mt-3 text-muted-foreground">{locale === "ru" ? "Войдите, чтобы управлять картинами и заказами клиентов." : "Rasmlar va mijozlar buyurtmalarini boshqarish uchun kiring."}</p>
             </div>
             <LoginForm />
           </CardContent>

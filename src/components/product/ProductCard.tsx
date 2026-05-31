@@ -22,12 +22,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { locale, t } = useLocale();
   const isSoldOut = product.stock_count === 0;
+  const dimensions = product.dimensions ? `${product.dimensions.width} x ${product.dimensions.height} ${product.dimensions.unit}` : null;
 
   return (
     <motion.article
       variants={cardVariants}
-      whileHover={{ y: -4, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}
-      className="group overflow-hidden rounded-lg border border-border bg-card"
+      whileHover={{ y: -5, boxShadow: "0 20px 60px rgba(0,0,0,0.34)" }}
+      className="group overflow-hidden rounded-lg border border-white/10 bg-card transition-colors hover:border-primary/50"
     >
       <Link to={`/product/${product.id}`} className="block" aria-label={`View ${product.title}`}>
         <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
@@ -59,11 +60,11 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="line-clamp-2 font-semibold text-foreground">{product.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{getCategoryName(product.category?.slug, product.category?.name, locale)}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{getCategoryName(product.category?.slug, product.category?.name, locale)}{dimensions ? ` · ${dimensions}` : ""}</p>
             </div>
             <p className="whitespace-nowrap font-semibold text-primary">{formatPrice(product.price)}</p>
           </div>
-          <p className="line-clamp-2 text-sm text-muted-foreground">{product.description}</p>
+          {product.description ? <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">{product.description}</p> : null}
         </div>
       </Link>
     </motion.article>

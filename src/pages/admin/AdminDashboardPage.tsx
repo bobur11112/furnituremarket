@@ -11,6 +11,7 @@ import { useAdminDashboard, useDeleteOrder, useUpdateOrderStatus } from "@/hooks
 import { getSupabaseErrorMessage } from "@/lib/supabase";
 import { formatDate, formatPrice } from "@/lib/utils";
 import type { Order, OrderStatus } from "@/types/order";
+import { useLocale, type Locale } from "@/contexts/LocaleContext";
 
 const orderStatuses: OrderStatus[] = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
@@ -28,16 +29,22 @@ function StatCard({ icon: Icon, label, value }: { icon: typeof Package; label: s
   );
 }
 
-function OrderStatusSelect({ order }: { order: Order }) {
+const adminText = {
+  ru: { updated: "Заказ обновлён", updateFailed: "Не удалось обновить заказ", deleted: "Заказ удалён", deleteFailed: "Не удалось удалить заказ", title: "Управление магазином", manage: "Управлять картинами", add: "Добавить картину", connection: "Ошибка подключения Supabase", products: "Картины", orders: "Заказы", users: "Пользователи", revenue: "Выручка", order: "Заказ", customer: "Клиент", total: "Сумма", status: "Статус", date: "Дата", actions: "Действия", emptyOrders: "Заказов пока нет.", guest: "Гость", price: "Цена", published: "Опубликовано", draft: "Черновик", name: "Имя", role: "Роль", joined: "Добавлен", pending: "Новый", confirmed: "Подтверждён", shipped: "Отправлен", delivered: "Доставлен", cancelled: "Отменён" },
+  uz: { updated: "Buyurtma yangilandi", updateFailed: "Buyurtmani yangilab bo'lmadi", deleted: "Buyurtma o'chirildi", deleteFailed: "Buyurtmani o'chirib bo'lmadi", title: "Do'kon boshqaruvi", manage: "Rasmlarni boshqarish", add: "Rasm qo'shish", connection: "Supabase ulanish xatosi", products: "Rasmlar", orders: "Buyurtmalar", users: "Foydalanuvchilar", revenue: "Tushum", order: "Buyurtma", customer: "Mijoz", total: "Jami", status: "Holat", date: "Sana", actions: "Amallar", emptyOrders: "Hozircha buyurtmalar yo'q.", guest: "Mehmon", price: "Narx", published: "Nashr qilingan", draft: "Qoralama", name: "Ism", role: "Rol", joined: "Qo'shilgan", pending: "Yangi", confirmed: "Tasdiqlangan", shipped: "Jo'natilgan", delivered: "Yetkazilgan", cancelled: "Bekor qilingan" },
+} as const;
+
+function OrderStatusSelect({ order, locale }: { order: Order; locale: Locale }) {
   const updateStatus = useUpdateOrderStatus();
+  const text = adminText[locale];
 
   async function handleChange(status: OrderStatus) {
     try {
       await updateStatus.mutateAsync({ orderId: order.id, status });
-      toast({ title: "Order updated", description: `Order #${order.id.slice(0, 8)} is ${status}.` });
+      toast({ title: text.updated, description: `#${order.id.slice(0, 8)}: ${text[status]}.` });
     } catch (error) {
       toast({
-        title: "Order update failed",
+        title: text.updateFailed,
         description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
@@ -54,7 +61,7 @@ function OrderStatusSelect({ order }: { order: Order }) {
     >
       {orderStatuses.map((status) => (
         <option key={status} value={status}>
-          {status}
+          {text[status]}
         </option>
       ))}
     </select>
@@ -63,16 +70,18 @@ function OrderStatusSelect({ order }: { order: Order }) {
 
 export function AdminDashboardPage() {
   const dashboardQuery = useAdminDashboard();
+  const { locale } = useLocale();
+  const text = adminText[locale];
   const deleteOrder = useDeleteOrder();
   const data = dashboardQuery.data;
 
   async function handleDeleteOrder(order: Order) {
     try {
       await deleteOrder.mutateAsync(order.id);
-      toast({ title: "Order deleted", description: `Order #${order.id.slice(0, 8)} was removed.` });
+      toast({ title: text.deleted, description: `#${order.id.slice(0, 8)}` });
     } catch (error) {
       toast({
-        title: "Order deletion failed",
+        title: text.deleteFailed,
         description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
@@ -84,16 +93,16 @@ export function AdminDashboardPage() {
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary">Admin</p>
-          <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">Marketplace control</h1>
+          <h1 className="mt-2 font-display text-4xl font-bold md:text-5xl">{text.title}</h1>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="outline">
-            <Link to="/seller/dashboard">Manage products</Link>
+            <Link to="/seller/dashboard">{text.manage}</Link>
           </Button>
           <Button asChild>
             <Link to="/seller/add-product">
               <Plus className="h-4 w-4" />
-              Add product
+              {text.add}
             </Link>
           </Button>
         </div>
@@ -102,7 +111,7 @@ export function AdminDashboardPage() {
       {dashboardQuery.isError ? (
         <Card>
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold">Supabase connection failed</h2>
+            <h2 className="text-xl font-semibold">{text.connection}</h2>
             <p className="mt-2 text-sm text-destructive">
               {getSupabaseErrorMessage(dashboardQuery.error)}
             </p>
@@ -116,36 +125,31 @@ export function AdminDashboardPage() {
       ) : (
         <div className="grid gap-6">
           <div className="grid gap-4 md:grid-cols-4">
-            <StatCard icon={Package} label="Products" value={String(data.summary.totalProducts)} />
-            <StatCard icon={BarChart3} label="Orders" value={String(data.summary.totalOrders)} />
-            <StatCard icon={UsersRound} label="Users" value={String(data.summary.totalUsers)} />
-            <StatCard icon={DollarSign} label="Revenue" value={formatPrice(data.summary.totalRevenue)} />
+            <StatCard icon={Package} label={text.products} value={String(data.summary.totalProducts)} />
+            <StatCard icon={BarChart3} label={text.orders} value={String(data.summary.totalOrders)} />
+            <StatCard icon={UsersRound} label={text.users} value={String(data.summary.totalUsers)} />
+            <StatCard icon={DollarSign} label={text.revenue} value={formatPrice(data.summary.totalRevenue)} />
           </div>
 
           <Card>
             <CardContent className="p-0">
               <div className="border-b border-border p-5">
-                <h2 className="text-xl font-semibold">Orders</h2>
+                <h2 className="text-xl font-semibold">{text.orders}</h2>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{text.order}</TableHead><TableHead>{text.customer}</TableHead><TableHead>{text.total}</TableHead><TableHead>{text.status}</TableHead><TableHead>{text.date}</TableHead><TableHead className="text-right">{text.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.orders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">#{order.id.slice(0, 8)}</TableCell>
-                      <TableCell>{order.shipping_address.fullName || order.shipping_address.email || order.buyer_id?.slice(0, 8) || "Guest"}</TableCell>
+                      <TableCell>{order.shipping_address.fullName || order.shipping_address.email || order.buyer_id?.slice(0, 8) || text.guest}</TableCell>
                       <TableCell>{formatPrice(order.total_price)}</TableCell>
                       <TableCell>
-                        <OrderStatusSelect order={order} />
+                        <OrderStatusSelect order={order} locale={locale} />
                       </TableCell>
                       <TableCell>{formatDate(order.created_at)}</TableCell>
                       <TableCell className="text-right">
@@ -164,7 +168,7 @@ export function AdminDashboardPage() {
                   {data.orders.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                        No customer orders yet.
+                        {text.emptyOrders}
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -177,14 +181,12 @@ export function AdminDashboardPage() {
             <Card>
               <CardContent className="p-0">
                 <div className="border-b border-border p-5">
-                  <h2 className="text-xl font-semibold">Products</h2>
+                  <h2 className="text-xl font-semibold">{text.products}</h2>
                 </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>{text.products}</TableHead><TableHead>{text.price}</TableHead><TableHead>{text.status}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -194,7 +196,7 @@ export function AdminDashboardPage() {
                         <TableCell>{formatPrice(product.price)}</TableCell>
                         <TableCell>
                           <Badge variant={product.is_published ? "default" : "muted"}>
-                            {product.is_published ? "Published" : "Draft"}
+                            {product.is_published ? text.published : text.draft}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -208,14 +210,12 @@ export function AdminDashboardPage() {
               <CardContent className="p-0">
                 <div className="flex items-center gap-2 border-b border-border p-5">
                   <ShieldCheck className="h-5 w-5 text-primary" aria-hidden="true" />
-                  <h2 className="text-xl font-semibold">Users</h2>
+                  <h2 className="text-xl font-semibold">{text.users}</h2>
                 </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Joined</TableHead>
+                      <TableHead>{text.name}</TableHead><TableHead>{text.role}</TableHead><TableHead>{text.joined}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

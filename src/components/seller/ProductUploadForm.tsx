@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { deleteUploadedProductImages, uploadProductImages, useCategories, useCreateProduct } from "@/hooks/useProducts";
 import { productSchema, type ProductFormValues } from "@/schemas/product.schema";
 import { cn } from "@/lib/utils";
+import { getCategoryName, useLocale } from "@/contexts/LocaleContext";
 
 const defaultValues: ProductFormValues = {
   title: "",
@@ -33,6 +34,12 @@ const defaultValues: ProductFormValues = {
 
 export function ProductUploadForm() {
   const { user } = useAuth();
+  const { locale } = useLocale();
+  const text = locale === "ru" ? {
+    title: "Название картины", description: "Описание", price: "Цена, сум", stock: "Количество", category: "Категория", style: "Стиль", material: "Материалы и техника", color: "Цветовая гамма", width: "Ширина", height: "Высота", depth: "Толщина", unit: "Единица", upload: "Загрузите изображения картины", uploadBody: "JPG, PNG или WebP. До 6 изображений.", preview: "Здесь появится предпросмотр изображений.", publish: "Опубликовать картину", published: "Картина опубликована", publishedBody: "добавлена в каталог.", rejected: "Изображение не принято", rejectedBody: "Используйте до 6 изображений JPG, PNG или WebP размером не более 5 МБ.", signIn: "Требуется вход", signInBody: "Войдите в аккаунт администратора.", imagesRequired: "Добавьте изображение", imagesRequiredBody: "Нужно загрузить хотя бы одно изображение картины.", dimensions: "Все размеры должны быть положительными.",
+  } : {
+    title: "Rasm nomi", description: "Tavsif", price: "Narx, so'm", stock: "Soni", category: "Toifa", style: "Uslub", material: "Material va texnika", color: "Ranglar", width: "Kenglik", height: "Balandlik", depth: "Qalinlik", unit: "Birlik", upload: "Rasm fayllarini yuklang", uploadBody: "JPG, PNG yoki WebP. 6 tagacha rasm.", preview: "Rasmlarning ko'rinishi shu yerda chiqadi.", publish: "Rasmni nashr qilish", published: "Rasm nashr qilindi", publishedBody: "katalogga qo'shildi.", rejected: "Rasm qabul qilinmadi", rejectedBody: "5 MB gacha bo'lgan 6 tagacha JPG, PNG yoki WebP rasm ishlating.", signIn: "Kirish talab qilinadi", signInBody: "Administrator akkauntiga kiring.", imagesRequired: "Rasm qo'shing", imagesRequiredBody: "Kamida bitta rasm yuklash kerak.", dimensions: "Barcha o'lchamlar musbat bo'lishi kerak.",
+  };
   const categoriesQuery = useCategories();
   const createProductMutation = useCreateProduct();
   const [files, setFiles] = useState<File[]>([]);
@@ -76,18 +83,18 @@ export function ProductUploadForm() {
     maxSize: 5 * 1024 * 1024,
     onDrop: (acceptedFiles) => setFiles((current) => [...current, ...acceptedFiles].slice(0, 6)),
     onDropRejected: () => {
-      toast({ title: "Image rejected", description: "Use up to 6 JPG, PNG, or WebP images, maximum 5 MB each.", variant: "destructive" });
+      toast({ title: text.rejected, description: text.rejectedBody, variant: "destructive" });
     },
   });
 
   async function onSubmit(values: ProductFormValues) {
     if (!user) {
-      toast({ title: "Sign in required", description: "Use an admin account to publish products.", variant: "destructive" });
+      toast({ title: text.signIn, description: text.signInBody, variant: "destructive" });
       return;
     }
 
     if (files.length === 0) {
-      toast({ title: "Images required", description: "Add at least one product image.", variant: "destructive" });
+      toast({ title: text.imagesRequired, description: text.imagesRequiredBody, variant: "destructive" });
       return;
     }
 
@@ -103,7 +110,7 @@ export function ProductUploadForm() {
         is_published: true,
       });
       setUploadProgress(100);
-      toast({ title: "Картина опубликована", description: `${values.title} добавлена в каталог.` });
+      toast({ title: text.published, description: `${values.title} ${text.publishedBody}` });
       reset(defaultValues);
       setFiles([]);
       window.setTimeout(() => setUploadProgress(0), 800);
@@ -124,30 +131,30 @@ export function ProductUploadForm() {
         <Card>
           <CardContent className="grid gap-5 p-5">
             <div className="grid gap-2">
-              <Label htmlFor="title">Название картины</Label>
+              <Label htmlFor="title">{text.title}</Label>
               <Input id="title" {...register("title")} />
               {errors.title ? <p className="text-sm text-destructive">{errors.title.message}</p> : null}
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Описание</Label>
+              <Label htmlFor="description">{text.description}</Label>
               <Textarea id="description" {...register("description")} />
               {errors.description ? <p className="text-sm text-destructive">{errors.description.message}</p> : null}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="price">Цена, сум</Label>
+                <Label htmlFor="price">{text.price}</Label>
                 <Input id="price" type="number" min="0" step="1" {...register("price", { valueAsNumber: true })} />
                 {errors.price ? <p className="text-sm text-destructive">{errors.price.message}</p> : null}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="stock">Количество</Label>
+                <Label htmlFor="stock">{text.stock}</Label>
                 <Input id="stock" type="number" min="0" step="1" {...register("stock_count", { valueAsNumber: true })} />
                 {errors.stock_count ? <p className="text-sm text-destructive">{errors.stock_count.message}</p> : null}
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="category">Категория</Label>
+                <Label htmlFor="category">{text.category}</Label>
                 <select
                   id="category"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -155,54 +162,54 @@ export function ProductUploadForm() {
                 >
                   {categoriesQuery.data?.map((category) => (
                     <option key={category.id} value={category.id}>
-                      {category.name}
+                      {getCategoryName(category.slug, category.name, locale)}
                     </option>
                   ))}
                 </select>
                 {errors.category_id ? <p className="text-sm text-destructive">{errors.category_id.message}</p> : null}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="style">Стиль</Label>
+                <Label htmlFor="style">{text.style}</Label>
                 <select
                   id="style"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   {...register("style")}
                 >
-                  <option value="modern">Современный</option>
-                  <option value="classic">Классический</option>
-                  <option value="scandinavian">Минимализм</option>
-                  <option value="industrial">Лофт</option>
-                  <option value="minimalist">Лаконичный</option>
+                  <option value="modern">{locale === "ru" ? "Современный" : "Zamonaviy"}</option>
+                  <option value="classic">{locale === "ru" ? "Классический" : "Klassik"}</option>
+                  <option value="scandinavian">{locale === "ru" ? "Минимализм" : "Minimalizm"}</option>
+                  <option value="industrial">{locale === "ru" ? "Лофт" : "Loft"}</option>
+                  <option value="minimalist">{locale === "ru" ? "Лаконичный" : "Minimalistik"}</option>
                 </select>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="material">Материалы и техника</Label>
+                <Label htmlFor="material">{text.material}</Label>
                 <Input id="material" {...register("material")} />
                 {errors.material ? <p className="text-sm text-destructive">{errors.material.message}</p> : null}
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="color">Цветовая гамма</Label>
+                <Label htmlFor="color">{text.color}</Label>
                 <Input id="color" {...register("color")} />
                 {errors.color ? <p className="text-sm text-destructive">{errors.color.message}</p> : null}
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-4">
               <div className="grid gap-2">
-                <Label htmlFor="width">Ширина</Label>
+                <Label htmlFor="width">{text.width}</Label>
                 <Input id="width" type="number" {...register("dimensions.width", { valueAsNumber: true })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="height">Высота</Label>
+                <Label htmlFor="height">{text.height}</Label>
                 <Input id="height" type="number" {...register("dimensions.height", { valueAsNumber: true })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="depth">Толщина</Label>
+                <Label htmlFor="depth">{text.depth}</Label>
                 <Input id="depth" type="number" {...register("dimensions.depth", { valueAsNumber: true })} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="unit">Единица</Label>
+                <Label htmlFor="unit">{text.unit}</Label>
                 <select
                   id="unit"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -213,7 +220,7 @@ export function ProductUploadForm() {
                 </select>
               </div>
             </div>
-            {errors.dimensions ? <p className="text-sm text-destructive">All dimensions must be positive.</p> : null}
+            {errors.dimensions ? <p className="text-sm text-destructive">{text.dimensions}</p> : null}
           </CardContent>
         </Card>
       </div>
@@ -231,8 +238,8 @@ export function ProductUploadForm() {
               <input {...getInputProps()} aria-label="Upload product images" />
               <div>
                 <UploadCloud className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
-                <p className="mt-3 font-medium">Загрузите изображения картины</p>
-                <p className="mt-1 text-sm text-muted-foreground">JPG, PNG или WebP. До 6 изображений.</p>
+                <p className="mt-3 font-medium">{text.upload}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{text.uploadBody}</p>
               </div>
             </div>
             {previews.length > 0 ? (
@@ -254,7 +261,7 @@ export function ProductUploadForm() {
             ) : (
               <div className="flex items-center gap-2 rounded-md bg-secondary p-3 text-sm text-muted-foreground">
                 <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                Images preview here before upload.
+                {text.preview}
               </div>
             )}
             {uploadProgress > 0 ? (
@@ -264,7 +271,7 @@ export function ProductUploadForm() {
             ) : null}
             <Button type="submit" disabled={isSubmitting || createProductMutation.isPending}>
               {isSubmitting || createProductMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Опубликовать картину
+              {text.publish}
             </Button>
           </CardContent>
         </Card>
