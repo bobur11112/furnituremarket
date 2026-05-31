@@ -145,7 +145,11 @@ export function AdminDashboardPage() {
                 <TableBody>
                   {data.orders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">#{order.id.slice(0, 8)}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link className="text-primary underline-offset-4 hover:underline" to={`/orders/${order.id.slice(0, 8)}`}>
+                          #{order.id.slice(0, 8)}
+                        </Link>
+                      </TableCell>
                       <TableCell>{order.shipping_address.fullName || order.shipping_address.email || order.buyer_id?.slice(0, 8) || text.guest}</TableCell>
                       <TableCell>{formatPrice(order.total_price)}</TableCell>
                       <TableCell>

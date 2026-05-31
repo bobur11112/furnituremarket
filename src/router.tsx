@@ -5,6 +5,7 @@ import { App } from "@/App";
 import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import { PageErrorFallback } from "@/components/layout/PageErrorFallback";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { OrderDetailPage } from "@/pages/admin/OrderDetailPage";
 import { AddProductPage } from "@/pages/seller/AddProductPage";
 import { AuthPage } from "@/pages/AuthPage";
 import { CartPage } from "@/pages/CartPage";
@@ -37,6 +38,14 @@ export const router = createBrowserRouter([
         element: withBoundary(
           <PrivateRoute roles={["admin"]}>
             <AdminDashboardPage />
+          </PrivateRoute>,
+        ),
+      },
+      {
+        path: "orders/:id",
+        element: withBoundary(
+          <PrivateRoute roles={["admin"]}>
+            <OrderDetailPage />
           </PrivateRoute>,
         ),
       },

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchManagedProducts } from "@/hooks/useProducts";
 import { jsonToShippingAddress, requireSupabaseConfigured, supabase } from "@/lib/supabase";
-import type { Order, OrderStatus } from "@/types/order";
+import type { Order, OrderItem, OrderStatus } from "@/types/order";
 
 type AdminSummary = {
   totalProducts: number;
@@ -20,6 +20,31 @@ async function fetchAdminOrders() {
     total_price: Number(row.total_price),
     shipping_address: jsonToShippingAddress(row.shipping_address),
   }));
+}
+
+export async function fetchAdminOrder(reference: string) {
+  requireSupabaseConfigured();
+  const orders = await fetchAdminOrders();
+  const order = orders.find((item) => item.id === reference || item.id.startsWith(reference));
+  if (!order) return null;
+
+  const { data: itemRows, error: itemsError } = await supabase
+    .from("order_items")
+    .select("*")
+    .eq("order_id", order.id)
+    .order("id");
+  if (itemsError) throw itemsError;
+
+  const productIds = itemRows.map((item) => item.product_id).filter((id): id is string => Boolean(id));
+  const products = productIds.length > 0 ? await fetchManagedProducts() : [];
+  const orderItems: OrderItem[] = itemRows.map((item) => ({
+    ...item,
+    quantity: Number(item.quantity),
+    price_at_purchase: Number(item.price_at_purchase),
+    product: products.find((product) => product.id === item.product_id),
+  }));
+
+  return { ...order, order_items: orderItems };
 }
 
 async function fetchAdminProfiles() {
@@ -47,6 +72,14 @@ export function useAdminDashboard() {
   });
 }
 
+export function useAdminOrder(reference: string | undefined) {
+  return useQuery({
+    queryKey: ["admin-order", reference],
+    queryFn: () => fetchAdminOrder(reference ?? ""),
+    enabled: Boolean(reference),
+  });
+}
+
 export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
 
@@ -57,7 +90,10 @@ export function useUpdateOrderStatus() {
       if (error) throw error;
       return { orderId, status };
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
+    },
   });
 }
 
@@ -74,6 +110,7 @@ export function useDeleteOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["seller-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-order"] });
     },
   });
 }
