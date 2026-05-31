@@ -13,6 +13,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useAdminOrder, useDeleteOrder, useUpdateOrderStatus } from "@/hooks/useAdmin";
 import { getSupabaseErrorMessage } from "@/lib/supabase";
 import { formatDate, formatPrice } from "@/lib/utils";
+import { getOrderTrackingUrl } from "@/lib/siteUrl";
 import type { Order, OrderItem, OrderStatus } from "@/types/order";
 
 const statuses: OrderStatus[] = ["new", "pending_confirmation", "confirmed", "processing", "packaging", "shipped", "delivered", "cancelled"];
@@ -30,8 +31,8 @@ function getSku(item: OrderItem) {
   return `BA-${(item.product_id ?? item.id).slice(0, 8).toUpperCase()}`;
 }
 
-function getSms(order: Order, origin: string, locale: "ru" | "uz") {
-  const url = `${origin}/order/track/${order.tracking_token}`;
+function getSms(order: Order, locale: "ru" | "uz") {
+  const url = getOrderTrackingUrl(order.tracking_token);
   const ru: Partial<Record<OrderStatus, string>> = {
     confirmed: `Ваш заказ ${order.order_code} подтверждён. Отслеживание: ${url}`,
     processing: `Ваш заказ ${order.order_code} принят в обработку. Статус: ${url}`,
@@ -67,7 +68,7 @@ export function OrderDetailPage() {
 
   const selectedStatus = nextStatus ?? order.status;
   const address = [order.shipping_address.address, order.shipping_address.city].filter(Boolean).join(", ");
-  const sms = getSms(order, window.location.origin, locale);
+  const sms = getSms(order, locale);
 
   async function handleStatusChange() {
     if (!order) return;

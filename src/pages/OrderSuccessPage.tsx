@@ -7,6 +7,7 @@ import { toast } from "@/components/ui/toast";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { useLocale } from "@/contexts/LocaleContext";
 import { usePublicOrderTracking } from "@/hooks/useOrders";
+import { getOrderTrackingUrl } from "@/lib/siteUrl";
 
 const copy = {
   ru: { title: "Заказ принят", body: "Мы позвоним вам для подтверждения деталей. Сохраните код заказа и ссылку отслеживания.", code: "Код заказа", link: "Ссылка для отслеживания", copy: "Скопировать ссылку", copied: "Ссылка скопирована", track: "Открыть отслеживание", catalog: "Вернуться в каталог", error: "Не удалось загрузить данные заказа" },
@@ -19,7 +20,7 @@ export function OrderSuccessPage() {
   const text = copy[locale];
   const orderQuery = usePublicOrderTracking(trackingToken);
   const trackingPath = `/order/track/${trackingToken ?? ""}`;
-  const trackingUrl = `${window.location.origin}${trackingPath}`;
+  const trackingUrl = getOrderTrackingUrl(trackingToken ?? "");
 
   async function copyLink() {
     await navigator.clipboard.writeText(trackingUrl);
