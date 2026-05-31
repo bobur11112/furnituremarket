@@ -13,6 +13,8 @@ import { CatalogPage } from "@/pages/CatalogPage";
 import { CheckoutPage } from "@/pages/CheckoutPage";
 import { HomePage } from "@/pages/HomePage";
 import { ProductDetailPage } from "@/pages/ProductDetailPage";
+import { OrderSuccessPage } from "@/pages/OrderSuccessPage";
+import { OrderTrackingPage } from "@/pages/OrderTrackingPage";
 import { SellerDashboardPage } from "@/pages/seller/SellerDashboardPage";
 
 const withBoundary = (element: ReactNode) => (
@@ -33,6 +35,8 @@ export const router = createBrowserRouter([
         element: withBoundary(<CheckoutPage />),
       },
       { path: "auth", element: withBoundary(<AuthPage />) },
+      { path: "order/success/:trackingToken", element: withBoundary(<OrderSuccessPage />) },
+      { path: "order/track/:trackingToken", element: withBoundary(<OrderTrackingPage />) },
       {
         path: "admin",
         element: withBoundary(

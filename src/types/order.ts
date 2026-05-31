@@ -1,6 +1,14 @@
 import type { Product } from "@/types/product";
 
-export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus =
+  | "new"
+  | "pending_confirmation"
+  | "confirmed"
+  | "processing"
+  | "packaging"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 export type ShippingAddress = {
   fullName: string;
@@ -23,11 +31,49 @@ export type OrderItem = {
 export type Order = {
   id: string;
   buyer_id: string | null;
+  order_code: string;
+  tracking_token: string;
   status: OrderStatus;
   total_price: number;
   shipping_address: ShippingAddress;
+  comment: string | null;
+  admin_note: string | null;
+  payment_method: string;
   created_at: string;
+  updated_at: string;
   order_items?: OrderItem[];
+  status_history?: OrderStatusHistory[];
 };
 
-export type CheckoutInput = ShippingAddress;
+export type OrderStatusHistory = {
+  id: string;
+  order_id: string;
+  old_status: OrderStatus | null;
+  new_status: OrderStatus;
+  changed_by_admin_id: string | null;
+  created_at: string;
+};
+
+export type PublicTrackingItem = {
+  title: string;
+  quantity: number;
+};
+
+export type PublicTrackingHistory = {
+  status: OrderStatus;
+  createdAt: string;
+};
+
+export type PublicOrderTracking = {
+  orderCode: string;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+  customerName: string;
+  maskedPhone: string;
+  city: string;
+  items: PublicTrackingItem[];
+  history: PublicTrackingHistory[];
+};
+
+export type CheckoutInput = ShippingAddress & { comment?: string };

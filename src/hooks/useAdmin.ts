@@ -44,7 +44,14 @@ export async function fetchAdminOrder(reference: string) {
     product: products.find((product) => product.id === item.product_id),
   }));
 
-  return { ...order, order_items: orderItems };
+  const { data: history, error: historyError } = await supabase
+    .from("order_status_history")
+    .select("*")
+    .eq("order_id", order.id)
+    .order("created_at");
+  if (historyError) throw historyError;
+
+  return { ...order, order_items: orderItems, status_history: history };
 }
 
 async function fetchAdminProfiles() {
@@ -84,9 +91,13 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: OrderStatus }) => {
+    mutationFn: async ({ orderId, status, adminNote }: { orderId: string; status: OrderStatus; adminNote?: string | null }) => {
       requireSupabaseConfigured();
-      const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+      const { error } = await supabase.rpc("update_order_status", {
+        order_id_input: orderId,
+        new_status_input: status,
+        admin_note_input: adminNote || null,
+      });
       if (error) throw error;
       return { orderId, status };
     },

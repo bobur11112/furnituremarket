@@ -120,23 +120,39 @@ export type Database = {
         Row: {
           id: string;
           buyer_id: string | null;
+          order_code: string;
+          tracking_token: string;
           status: OrderStatus;
           total_price: number;
           shipping_address: ShippingAddress;
+          comment: string | null;
+          admin_note: string | null;
+          payment_method: string;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
           buyer_id?: string | null;
+          order_code: string;
+          tracking_token: string;
           status?: OrderStatus;
           total_price: number;
           shipping_address: ShippingAddress;
+          comment?: string | null;
+          admin_note?: string | null;
+          payment_method?: string;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           status?: OrderStatus;
           total_price?: number;
           shipping_address?: ShippingAddress;
+          comment?: string | null;
+          admin_note?: string | null;
+          payment_method?: string;
+          updated_at?: string;
         };
         Relationships: [
           {
@@ -187,6 +203,26 @@ export type Database = {
           },
         ];
       };
+      order_status_history: {
+        Row: {
+          id: string;
+          order_id: string;
+          old_status: OrderStatus | null;
+          new_status: OrderStatus;
+          changed_by_admin_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          old_status?: OrderStatus | null;
+          new_status: OrderStatus;
+          changed_by_admin_id?: string | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -194,8 +230,17 @@ export type Database = {
         Args: {
           shipping: ShippingAddress;
           items: Json;
+          customer_comment?: string | null;
         };
-        Returns: string;
+        Returns: Json;
+      };
+      get_public_order_tracking: {
+        Args: { tracking_token_input: string };
+        Returns: Json;
+      };
+      update_order_status: {
+        Args: { order_id_input: string; new_status_input: string; admin_note_input?: string | null };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

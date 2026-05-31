@@ -13,7 +13,7 @@ import { formatDate, formatPrice } from "@/lib/utils";
 import type { Order, OrderStatus } from "@/types/order";
 import { useLocale, type Locale } from "@/contexts/LocaleContext";
 
-const orderStatuses: OrderStatus[] = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+const orderStatuses: OrderStatus[] = ["new", "pending_confirmation", "confirmed", "processing", "packaging", "shipped", "delivered", "cancelled"];
 
 function StatCard({ icon: Icon, label, value }: { icon: typeof Package; label: string; value: string }) {
   return (
@@ -30,8 +30,8 @@ function StatCard({ icon: Icon, label, value }: { icon: typeof Package; label: s
 }
 
 const adminText = {
-  ru: { updated: "Заказ обновлён", updateFailed: "Не удалось обновить заказ", deleted: "Заказ удалён", deleteFailed: "Не удалось удалить заказ", title: "Управление магазином", manage: "Управлять картинами", add: "Добавить картину", connection: "Ошибка подключения Supabase", products: "Картины", orders: "Заказы", users: "Пользователи", revenue: "Выручка", order: "Заказ", customer: "Клиент", total: "Сумма", status: "Статус", date: "Дата", actions: "Действия", emptyOrders: "Заказов пока нет.", guest: "Гость", price: "Цена", published: "Опубликовано", draft: "Черновик", name: "Имя", role: "Роль", joined: "Добавлен", pending: "Новый", confirmed: "Подтверждён", shipped: "Отправлен", delivered: "Доставлен", cancelled: "Отменён" },
-  uz: { updated: "Buyurtma yangilandi", updateFailed: "Buyurtmani yangilab bo'lmadi", deleted: "Buyurtma o'chirildi", deleteFailed: "Buyurtmani o'chirib bo'lmadi", title: "Do'kon boshqaruvi", manage: "Rasmlarni boshqarish", add: "Rasm qo'shish", connection: "Supabase ulanish xatosi", products: "Rasmlar", orders: "Buyurtmalar", users: "Foydalanuvchilar", revenue: "Tushum", order: "Buyurtma", customer: "Mijoz", total: "Jami", status: "Holat", date: "Sana", actions: "Amallar", emptyOrders: "Hozircha buyurtmalar yo'q.", guest: "Mehmon", price: "Narx", published: "Nashr qilingan", draft: "Qoralama", name: "Ism", role: "Rol", joined: "Qo'shilgan", pending: "Yangi", confirmed: "Tasdiqlangan", shipped: "Jo'natilgan", delivered: "Yetkazilgan", cancelled: "Bekor qilingan" },
+  ru: { updated: "Заказ обновлён", updateFailed: "Не удалось обновить заказ", deleted: "Заказ удалён", deleteFailed: "Не удалось удалить заказ", title: "Управление магазином", manage: "Управлять картинами", add: "Добавить картину", connection: "Ошибка подключения Supabase", products: "Картины", orders: "Заказы", users: "Пользователи", revenue: "Выручка", order: "Заказ", customer: "Клиент", total: "Сумма", status: "Статус", date: "Дата", actions: "Действия", emptyOrders: "Заказов пока нет.", guest: "Гость", price: "Цена", published: "Опубликовано", draft: "Черновик", name: "Имя", role: "Роль", joined: "Добавлен", new: "Новый", pending_confirmation: "Ожидает подтверждения", confirmed: "Подтверждён", processing: "В обработке", packaging: "Упаковывается", shipped: "Отправлен", delivered: "Доставлен", cancelled: "Отменён" },
+  uz: { updated: "Buyurtma yangilandi", updateFailed: "Buyurtmani yangilab bo'lmadi", deleted: "Buyurtma o'chirildi", deleteFailed: "Buyurtmani o'chirib bo'lmadi", title: "Do'kon boshqaruvi", manage: "Rasmlarni boshqarish", add: "Rasm qo'shish", connection: "Supabase ulanish xatosi", products: "Rasmlar", orders: "Buyurtmalar", users: "Foydalanuvchilar", revenue: "Tushum", order: "Buyurtma", customer: "Mijoz", total: "Jami", status: "Holat", date: "Sana", actions: "Amallar", emptyOrders: "Hozircha buyurtmalar yo'q.", guest: "Mehmon", price: "Narx", published: "Nashr qilingan", draft: "Qoralama", name: "Ism", role: "Rol", joined: "Qo'shilgan", new: "Yangi", pending_confirmation: "Tasdiqlash kutilmoqda", confirmed: "Tasdiqlangan", processing: "Tayyorlanmoqda", packaging: "Qadoqlanmoqda", shipped: "Jo'natilgan", delivered: "Yetkazilgan", cancelled: "Bekor qilingan" },
 } as const;
 
 function OrderStatusSelect({ order, locale }: { order: Order; locale: Locale }) {
@@ -57,7 +57,7 @@ function OrderStatusSelect({ order, locale }: { order: Order; locale: Locale }) 
       disabled={updateStatus.isPending}
       value={order.status}
       onChange={(event) => void handleChange(event.target.value as OrderStatus)}
-      aria-label={`Update order ${order.id.slice(0, 8)} status`}
+      aria-label={`Update order ${order.order_code} status`}
     >
       {orderStatuses.map((status) => (
         <option key={status} value={status}>
@@ -147,7 +147,7 @@ export function AdminDashboardPage() {
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         <Link className="text-primary underline-offset-4 hover:underline" to={`/orders/${order.id.slice(0, 8)}`}>
-                          #{order.id.slice(0, 8)}
+                          {order.order_code}
                         </Link>
                       </TableCell>
                       <TableCell>{order.shipping_address.fullName || order.shipping_address.email || order.buyer_id?.slice(0, 8) || text.guest}</TableCell>

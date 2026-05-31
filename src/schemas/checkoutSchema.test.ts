@@ -18,4 +18,9 @@ describe("checkoutSchema", () => {
     const result = checkoutSchema.safeParse({ ...validCheckout, fullName: "A", email: "not-email" });
     expect(result.success).toBe(false);
   });
+
+  it("allows guest checkout without email and rejects oversized comments", () => {
+    expect(checkoutSchema.safeParse({ ...validCheckout, email: "" }).success).toBe(true);
+    expect(checkoutSchema.safeParse({ ...validCheckout, comment: "x".repeat(501) }).success).toBe(false);
+  });
 });

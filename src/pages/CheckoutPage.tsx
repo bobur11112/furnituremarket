@@ -9,11 +9,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { useCart } from "@/hooks/useCart";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { formatPrice } from "@/lib/utils";
+import { getSupabaseErrorMessage } from "@/lib/supabase";
 import { checkoutSchema, type CheckoutFormValues } from "@/schemas/order.schema";
 import { useLocale } from "@/contexts/LocaleContext";
 
@@ -35,6 +37,7 @@ export function CheckoutPage() {
       phone: "",
       address: "",
       city: "",
+      comment: "",
     },
   });
 
@@ -47,14 +50,14 @@ export function CheckoutPage() {
     if (items.length === 0) return;
 
     try {
-      await createOrderMutation.mutateAsync({ checkout: values, items });
+      const createdOrder = await createOrderMutation.mutateAsync({ checkout: values, items });
       clearCart();
       toast({ title: t("orderPlaced"), description: t("orderPlacedBody") });
-      navigate("/catalog");
+      navigate(`/order/success/${createdOrder.trackingToken}`);
     } catch (error) {
       toast({
         title: t("checkoutFailed"),
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: getSupabaseErrorMessage(error),
         variant: "destructive",
       });
     }
@@ -116,6 +119,11 @@ export function CheckoutPage() {
                     <>
                       <Field id="address" label={t("address")} error={methods.formState.errors.address?.message} />
                       <Field id="city" label={t("city")} error={methods.formState.errors.city?.message} />
+                      <div className="grid gap-2">
+                        <Label htmlFor="comment">{t("comment")}</Label>
+                        <Textarea id="comment" {...methods.register("comment")} />
+                        {methods.formState.errors.comment?.message ? <p className="text-sm text-destructive">{methods.formState.errors.comment.message}</p> : null}
+                      </div>
                     </>
                   ) : null}
                 </motion.div>
