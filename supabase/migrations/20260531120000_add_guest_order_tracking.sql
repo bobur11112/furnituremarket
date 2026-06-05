@@ -130,9 +130,7 @@ begin
     'city', public.clean_order_text(shipping->>'city', 80)
   );
 
-  if length(clean_shipping->>'fullName') < 2
-    or length(clean_phone) < 9
-    or length(clean_shipping->>'address') < 5
+  if length(clean_shipping->>'address') < 5
     or length(clean_shipping->>'city') < 2 then
     raise exception 'Shipping details are incomplete';
   end if;
@@ -142,7 +140,7 @@ begin
     raise exception 'Email is invalid';
   end if;
 
-  if exists (
+  if clean_phone <> '' and exists (
     select 1 from public.orders
     where shipping_address->>'phone' = clean_phone
       and created_at > now() - interval '15 minutes'
