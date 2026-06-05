@@ -19,8 +19,8 @@ describe("checkoutSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("allows guest checkout without contact details and rejects oversized comments", () => {
-    expect(checkoutSchema.safeParse({ ...validCheckout, fullName: "", email: "", phone: "" }).success).toBe(true);
+  it("allows guest checkout without contact and delivery details and rejects oversized comments", () => {
+    expect(checkoutSchema.safeParse({ fullName: "", email: "", phone: "", address: "", city: "" }).success).toBe(true);
     expect(checkoutSchema.safeParse({ ...validCheckout, comment: "x".repeat(501) }).success).toBe(false);
   });
 });

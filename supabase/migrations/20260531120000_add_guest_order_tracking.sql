@@ -130,11 +130,6 @@ begin
     'city', public.clean_order_text(shipping->>'city', 80)
   );
 
-  if length(clean_shipping->>'address') < 5
-    or length(clean_shipping->>'city') < 2 then
-    raise exception 'Shipping details are incomplete';
-  end if;
-
   if (clean_shipping->>'email') <> ''
     and (clean_shipping->>'email') !~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' then
     raise exception 'Email is invalid';
